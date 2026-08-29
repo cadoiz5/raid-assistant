@@ -122,19 +122,17 @@ def evo_path(frm, to):
 
 
 def _evo_how(step):
-    """Short 'how to evolve' note for one step."""
+    """Compact 'how to evolve' note for one step: 'Lvl 30' / 'Dawn Stone' / …"""
     if step.get("item"):
-        return f"needs {step['item']}"
+        return step["item"]
     t = step.get("type", "")
-    if t.startswith("TRADE"):
-        return "by trading"
-    if t.startswith("HAPPINESS"):
-        return "raise friendship"
     if t.startswith("LEVEL") and isinstance(step.get("val"), int) and 1 <= step["val"] <= 100:
-        return f"by Lv {step['val']}"
-    if t.startswith("LEVEL"):
-        return "by levelling"
-    return "by " + t.lower().replace("_", " ")
+        return f"Lvl {step['val']}"
+    if t.startswith("TRADE"):
+        return "trade"
+    if t.startswith("HAPPINESS"):
+        return "friendship"
+    return "level up"
 
 
 # ---------------- strat files ----------------
@@ -462,8 +460,8 @@ def check_slot(slot, block):
             r["species_ok"] = False
             r["species_msg"] = f"want {want}, got {scan['species'] or '?'}"
             return r
-        r["evolve"] = (f"{scan['species']} → " + " → ".join(s["to"] for s in steps)
-                       + f" ({', then '.join(_evo_how(s) for s in steps)})")
+        r["evolve"] = (f"evolve to {want} ("
+                       + ", ".join(_evo_how(s) for s in steps) + ")")
 
     base = BASE_STATS.get(want)
     mult = _mult_fn(scan.get("nature"))
@@ -550,18 +548,15 @@ def check_slot(slot, block):
     r["breed"] = [c_iv, c_nat, c_ha, c_egg]
 
     # ---------- TRAINING ----------
-    # Level also carries the "needs to evolve" case.
+    # Level also carries the "needs to evolve" case: "50 -> 100, evolve to X (Lvl 30)"
     lv = scan.get("level")
-    under = f"{lv} — train it to 100" if lv not in (100, None) else ""
-    if r["evolve"]:
-        c_lv = _chk("Level", "fail", "evolve " + r["evolve"]
-                    + (f", then train to 100" if under else ""))
-    elif lv == 100:
-        c_lv = _chk("Level", "pass", "100")
-    elif lv is None:
+    if lv is None:
         c_lv = _chk("Level", "missing", "missing information")
     else:
-        c_lv = _chk("Level", "fail", under)
+        bits = ([f"{lv} -> 100"] if lv != 100 else []) + \
+               ([r["evolve"]] if r["evolve"] else [])
+        c_lv = _chk("Level", "pass", "100") if not bits \
+            else _chk("Level", "fail", ", ".join(bits))
 
     if not bounds:
         c_ev = _chk("EVs", "na", "no stat bounds")
