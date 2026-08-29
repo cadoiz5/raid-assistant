@@ -443,17 +443,17 @@ def _chk(label, status, note=""):
 
 def check_slot(slot, block):
     """A structured report card for one scanned mon vs its strat slot:
-        {species_ok, species_msg, evolve, level:(lvl, ok),
+        {species_ok, species_msg, evolve,
          breed:   [IVs, Nature, Hidden Ability, Egg moves],
-         training:[EVs, Ability, Moveset, Item]}
+         training:[Level, EVs, Ability, Moveset, Item]}
     each check = {label, status: pass|fail|na|blocked|missing, note}.
-    'missing' (note "missing information") = the scan didn't capture that field."""
+    'missing' (note "missing information") = the scan didn't capture that field.
+    The Level check also carries the "must evolve first" case."""
     scan = parse_scan(block)
     want = slot["species"]
     bounds, req_moves = slot["bounds"], slot["moves"]
     r = {"scan": scan, "want": want, "species_ok": True, "species_msg": "",
-         "evolve": None, "level": (scan.get("level"), scan.get("level") == 100),
-         "breed": [], "training": []}
+         "evolve": None, "breed": [], "training": []}
 
     steps = None
     if _norm(scan["species"]) != _norm(want):
@@ -463,7 +463,7 @@ def check_slot(slot, block):
             r["species_msg"] = f"want {want}, got {scan['species'] or '?'}"
             return r
         r["evolve"] = (f"{scan['species']} → " + " → ".join(s["to"] for s in steps)
-                       + f"  ({', then '.join(_evo_how(s) for s in steps)})")
+                       + f" ({', then '.join(_evo_how(s) for s in steps)})")
 
     base = BASE_STATS.get(want)
     mult = _mult_fn(scan.get("nature"))
@@ -540,27 +540,28 @@ def check_slot(slot, block):
 
     egg = EGG_MOVES.get(_norm(want), set())
     scanned_moves = {_norm(m) for m in scan["moves"]}
-    full_moveset = len(scan["moves"]) >= 4  # else the scan dropped a move row
     req_egg = [m for m in req_moves if _norm(m) in egg]
     if not req_egg:
         c_egg = _chk("Egg moves", "na", "none")
     else:
         note, miss = _need_note(req_egg, scanned_moves)
-        c_egg = (_chk("Egg moves", "pass", note) if not miss
-                 else _chk("Egg moves", "missing", "missing information")
-                 if not full_moveset
-                 else _chk("Egg moves", "fail", note))
+        c_egg = _chk("Egg moves", "fail" if miss else "pass", note)
 
     r["breed"] = [c_iv, c_nat, c_ha, c_egg]
 
     # ---------- TRAINING ----------
+    # Level also carries the "needs to evolve" case.
     lv = scan.get("level")
-    if lv == 100:
+    under = f"{lv} — train it to 100" if lv not in (100, None) else ""
+    if r["evolve"]:
+        c_lv = _chk("Level", "fail", "evolve " + r["evolve"]
+                    + (f", then train to 100" if under else ""))
+    elif lv == 100:
         c_lv = _chk("Level", "pass", "100")
     elif lv is None:
         c_lv = _chk("Level", "missing", "missing information")
     else:
-        c_lv = _chk("Level", "fail", f"{lv} — train it to 100")
+        c_lv = _chk("Level", "fail", under)
 
     if not bounds:
         c_ev = _chk("EVs", "na", "no stat bounds")
@@ -594,20 +595,15 @@ def check_slot(slot, block):
         c_mv = _chk("Moveset", "na", "none required")
     else:
         note, miss = _need_note(need, scanned_moves)
-        c_mv = (_chk("Moveset", "pass", note) if not miss
-                else _chk("Moveset", "missing", "missing information")
-                if not full_moveset
-                else _chk("Moveset", "fail", note))
+        c_mv = _chk("Moveset", "fail" if miss else "pass", note)
 
     if not slot["item"]:
-        c_it = _chk("Item", "na", "not pinned")
-    elif scan.get("item") is None:
-        c_it = _chk("Item", "missing", "missing information")
+        c_it = _chk("Item", "na", scan.get("item") or "none")
     elif _norm(scan.get("item")) in {_norm(i) for i in slot["item"]}:
-        c_it = _chk("Item", "pass", scan.get("item") or slot["item"][0])
+        c_it = _chk("Item", "pass", scan["item"])
     else:
         c_it = _chk("Item", "fail",
-                    f"{scan['item']} -- need " + " or ".join(slot["item"]))
+                    f"{scan.get('item') or 'no item'} -- need " + " or ".join(slot["item"]))
 
     r["training"] = [c_lv, c_ev, c_ab, c_mv, c_it]
     return r
@@ -617,7 +613,7 @@ def slot_ok(slot, block):
     """True when every applicable check passes (grid / list roll-up).
     A 'missing' check counts as not-ok - can't confirm what didn't scan."""
     r = check_slot(slot, block)
-    if not r["species_ok"] or r["evolve"]:
+    if not r["species_ok"]:
         return False
     return all(c["status"] not in ("fail", "missing")
                for c in r["breed"] + r["training"])
@@ -628,12 +624,8 @@ def validate(slot, block):
     r = check_slot(slot, block)
     if not r["species_ok"]:
         return [f"species: {r['species_msg']}"]
-    out = []
-    if r["evolve"]:
-        out.append(f"evolve {r['evolve']}")
-    out += [f"{c['label']}: {c['note']}" for c in r["breed"] + r["training"]
+    return [f"{c['label']}: {c['note']}" for c in r["breed"] + r["training"]
             if c["status"] in ("fail", "missing")]
-    return out
 
 
 def evaluate_position(raid, position, scan_path):
@@ -830,8 +822,6 @@ class ScanWindow:
             return
 
         extra = []
-        if r["evolve"]:
-            extra.append(f"⚑ evolve  {r['evolve']}")
         missing = [c["label"] for c in r["breed"] + r["training"]
                    if c["status"] == "missing"]
         if missing:
