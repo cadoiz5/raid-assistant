@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-app.py - main GUI for the PokePaste tool.
+app.py - main GUI for Raid Assistant.
 
 A "character" is a PokeMMO account (players have alts). Loading one "logs you
 in" and scopes everything to saves/<character>/.
@@ -91,7 +91,7 @@ class App:
         saved = self.prefs.get("scan_region")
         self.bbox = tuple(saved) if saved and len(saved) == 4 else None
 
-        root.title("PokePaste Manager")
+        root.title("Raid Assistant")
         root.geometry("470x330")
         root.minsize(400, 280)
 
