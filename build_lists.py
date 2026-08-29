@@ -74,6 +74,43 @@ def main():
         json.dump(evo, fh, separators=(",", ":"), sort_keys=True)
     print(f"  {'evolutions.json':15} {len(evo):5} entries")
 
+    # {species: [slot1, slot2, hidden-or-null]} - PokeMMO lists 3 ability slots,
+    # the 3rd being the hidden ability (or a "--" placeholder when there is none).
+    def _abils(mon):
+        names = [a["name"] for a in mon.get("abilities", [])]
+        names += [None] * (3 - len(names))
+        hidden = names[2] if names[2] and names[2] not in ("--", "-") \
+            and names[2] not in names[:2] else None
+        return [names[0], names[1], hidden]
+    abils = {m["name"]: _abils(m) for m in monsters}
+    with open(os.path.join(DATA, "species_abilities.json"), "w", encoding="utf-8") as fh:
+        json.dump(abils, fh, separators=(",", ":"), sort_keys=True)
+    print(f"  {'species_abilities':15} {len(abils):5} entries")
+
+    # {species: [egg-exclusive moves]} - a move only obtainable by breeding the
+    # line (present as EGG on some stage, never as level/TM/tutor on any stage).
+    prevo = {e["name"]: m["name"] for m in monsters for e in m.get("evolutions", [])}
+    moves_by = {m["name"]: m.get("moves", []) for m in monsters}
+
+    def _line(sp):
+        chain = [sp]
+        while chain[-1] in prevo and prevo[chain[-1]] not in chain:
+            chain.append(prevo[chain[-1]])
+        return chain
+
+    egg_moves = {}
+    for mon in monsters:
+        egg, other = set(), set()
+        for stage in _line(mon["name"]):
+            for mv in moves_by.get(stage, []):
+                (egg if "EGG" in mv["type"] else other).add(mv["name"])
+        only = sorted(egg - other)
+        if only:
+            egg_moves[mon["name"]] = only
+    with open(os.path.join(DATA, "egg_moves.json"), "w", encoding="utf-8") as fh:
+        json.dump(egg_moves, fh, separators=(",", ":"), sort_keys=True)
+    print(f"  {'egg_moves.json':15} {len(egg_moves):5} entries")
+
 
 if __name__ == "__main__":
     print("building reference lists from", os.path.normpath(DUMP))

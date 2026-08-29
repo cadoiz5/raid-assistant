@@ -59,3 +59,29 @@ Stat bounds are read at **level 100** — every raid mon must be level 100
 (checked automatically, no need to write it). If a scan is under 100 or is
 still a pre-evolution, its stats are projected to level 100 for the check and
 the report says to level up / evolve.
+
+## What a scan is graded on
+
+The scan window shows two groups of four checks, derived from the block above:
+
+**Breed** (set when the mon is bred — a fail means re-breed, or re-roll for a
+legendary):
+
+| Check           | Passes when |
+|-----------------|-------------|
+| IVs             | the IVs are high enough to hit the stat bounds |
+| Nature          | the scanned nature *can* reach the stat bounds |
+| Hidden Ability  | pinned ability is the species' HA and the mon is on it / shows the HA diamond |
+| Egg moves       | every pinned move that is egg-only for the line is present |
+
+**Training** (adjustable later — a fail is a quick fix):
+
+| Check    | Passes when |
+|----------|-------------|
+| EVs      | the (projected) level-100 stats are all in range |
+| Ability  | the mon is currently on the pinned ability |
+| Moveset  | every pinned non-egg move is present |
+| Item     | the held item matches `@ Item` |
+
+A check reads `–` when the block doesn't pin anything for it, and `⋯` when an
+earlier breed check has to be fixed first.

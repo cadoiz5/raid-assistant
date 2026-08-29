@@ -309,8 +309,8 @@ def parse(rows):
     texts = [_text(r) for r in rows]
     d = {
         "name": None, "gender": None, "level": None, "item": None,
-        "ability": None, "nature": None, "evs": None, "ivs": None,
-        "stats": None, "moves": [],
+        "ability": None, "has_ha": False, "nature": None, "evs": None,
+        "ivs": None, "stats": None, "moves": [],
     }
 
     # --- name + level: the "Lv 100 <name>" row ---
@@ -352,6 +352,10 @@ def parse(rows):
         head = re.sub(r"[^a-z]", "", t.lower())
         if d["ability"] is None and head[:4] in ("abil", "abli", "ablt", "abll"):
             d["ability"] = _snap(_field_value(rows[i], r"abil"), ABILITIES)
+            # a lone marker token trailing the name = the Hidden Ability diamond
+            # (OCRs as '#', a diamond glyph, etc.)
+            d["has_ha"] = any(re.fullmatch(r"[#*+.◆◇♦◈⬥⬦]{1,2}",
+                                           w[2]) for w in rows[i][1:])
         elif d["item"] is None and ("held" in head[:11] or head[:4] == "item"):
             d["item"] = _snap(_field_value(rows[i], r"item|held|tem"), ITEMS, cutoff=0.82)
         elif re.match(r"mark|marc|nark", head):
@@ -384,7 +388,7 @@ def format_paste(d):
     out = [head]
 
     if d["ability"]:
-        out.append(f"Ability: {d['ability']}")
+        out.append(f"Ability: {d['ability']}" + (" (HA)" if d.get("has_ha") else ""))
     if d["level"]:
         out.append(f"Level: {d['level']}")
 
