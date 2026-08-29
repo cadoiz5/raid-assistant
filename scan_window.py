@@ -75,6 +75,15 @@ def _norm(s):
     return re.sub(r"[^a-z0-9]", "", (s or "").lower())
 
 
+try:
+    with open(os.path.join(HERE, "data", "no_breed.txt"), encoding="utf-8") as _fh:
+        # species whose IVs can't come from breeding; a legendary can re-roll its
+        # IVs in-game, so tell the player which IVs to aim for instead of "wrong breed"
+        NO_BREED = {_norm(ln) for ln in _fh if ln.strip() and not ln.startswith("#")}
+except OSError:
+    NO_BREED = set()
+
+
 # ---------------- strat files ----------------
 def strat_names(raid):
     d = os.path.join(STRATS, raid)
@@ -262,6 +271,79 @@ def suggest_evs(species, scan, bounds):
     return ("ok", {s: target[s] for s in changed})
 
 
+def _iv_window(base, mult, lo, hi):
+    """IV values (0..31) for which *some* EV 0..252 lands the final stat in
+    [lo, hi]. None if no IV works (bound impossible for this base/nature)."""
+    feas = [v for v in range(32)
+            if _final_stat(base, v, 0, mult) <= hi and _final_stat(base, v, 252, mult) >= lo]
+    return (feas[0], feas[-1]) if feas else None
+
+
+def suggest_ivs(species, scan, bounds):
+    """For a mon that can re-roll IVs (see NO_BREED): the IV range each
+    constrained stat needs.
+      -> ('impossible', stat)      even a perfect IV can't reach the bound
+         ('ok', {stat: (lo, hi)})  IV windows for the stats that must change
+         None                      not enough data
+    IVs are independent per stat, so each window stands on its own.
+    """
+    base = BASE_STATS.get(species)
+    nat = NATURES.get((scan.get("nature") or "").lower())
+    if not base or nat is None:
+        return None
+    plus, minus = nat
+    ivs = scan.get("ivs", {})
+    mult = lambda i: None if i == 0 else 1.1 if i == plus else 0.9 if i == minus else 1.0
+    out = {}
+    for stat, (lo, hi) in bounds.items():
+        i = STATS.index(stat)
+        w = _iv_window(base[i], mult(i), lo, hi)
+        if w is None:
+            return ("impossible", stat)
+        if not w[0] <= ivs.get(stat, 31) <= w[1]:
+            out[stat] = w
+    return ("ok", out)
+
+
+def _ev_line(new_evs, scan):
+    parts = []
+    for s in STATS:
+        if s in new_evs:
+            d = new_evs[s] - scan.get("evs", {}).get(s, 0)
+            parts.append(f"{s} {new_evs[s]} ({d:+d})")
+    return "→ EVs: " + ", ".join(parts)
+
+
+def _suggest_fix(fails, slot, scan):
+    """Append a '→ EVs: ...' and/or '→ IVs: ...' hint for a stat-bound failure."""
+    species, bounds = slot["species"], slot["bounds"]
+    sug = suggest_evs(species, scan, bounds)
+    if sug and sug[0] == "ok" and sug[1]:
+        fails.append(_ev_line(sug[1], scan))
+        return
+    if not sug or sug[0] != "breed":
+        return
+    # EVs alone can't do it. A legendary can re-roll its IVs - say which to aim for.
+    if _norm(species) in NO_BREED:
+        ivf = suggest_ivs(species, scan, bounds)
+        if ivf and ivf[0] == "impossible":
+            fails.append(f"→ can't get {ivf[1]} in range with any IV — wrong nature")
+            return
+        if ivf and ivf[0] == "ok" and ivf[1]:
+            fails.append("→ IVs: " + ", ".join(
+                f"{s} {_fmt_bound(*ivf[1][s])}" for s in STATS if s in ivf[1]))
+            fixed = dict(scan, ivs=dict(scan.get("ivs", {})))
+            for s, (wlo, whi) in ivf[1].items():
+                fixed["ivs"][s] = min(max(fixed["ivs"].get(s, 31), wlo), whi)
+            ev2 = suggest_evs(species, fixed, bounds)
+            if ev2 and ev2[0] == "ok" and ev2[1]:
+                fails.append(_ev_line(ev2[1], scan))
+            return
+        fails.append("→ bounds can't be met with any IVs/EVs — wrong nature")
+        return
+    fails.append("→ can't fix with EVs — wrong breed")
+
+
 def load_scans(path):
     """saves/<char>/<raid>/<Pn>.txt -> {slot_num: block_text}."""
     scans = {}
@@ -295,16 +377,7 @@ def validate(slot, block):
             fails.append(f"{stat} {val}, need {_fmt_bound(lo, hi)}")
             bad_stat = True
     if bad_stat:
-        sug = suggest_evs(slot["species"], scan, slot["bounds"])
-        if sug and sug[0] == "breed":
-            fails.append("→ can't fix with EVs — wrong breed")
-        elif sug and sug[0] == "ok" and sug[1]:
-            parts = []
-            for s in STATS:
-                if s in sug[1]:
-                    d = sug[1][s] - scan.get("evs", {}).get(s, 0)
-                    parts.append(f"{s} {sug[1][s]} ({d:+d})")
-            fails.append("→ EVs: " + ", ".join(parts))
+        _suggest_fix(fails, slot, scan)
     scanned_moves = {_norm(m) for m in scan["moves"]}
     for mv in slot["moves"]:
         if _norm(mv) not in scanned_moves:

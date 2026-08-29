@@ -361,9 +361,12 @@ def parse(rows):
     move_rows = rows[marking_i + 1:] if marking_i is not None else rows[-4:]
     moves = []
     for r in move_rows:
-        solo = re.sub(r"[^a-z]", "", _text(r).lower())
-        if len(r) == 1 and (solo in TYPE_WORDS or _fuzzy(solo, TYPE_WORDS, 0.8)):
-            continue  # a stray badge that landed on its own line
+        solo = re.sub(r"[^a-z0-9]", "", _text(r).lower())
+        # a lone type badge that landed on its own line - skip it, UNLESS the
+        # word is itself a real move ("Psychic" is both a type and a move).
+        if (len(r) == 1 and solo not in MOVES.key
+                and (solo in TYPE_WORDS or _fuzzy(solo, TYPE_WORDS, 0.8))):
+            continue
         mv = _snap_move(_text(r))
         if mv and not re.match(r"(stat|iv|ev|mark|lv)\b", mv.lower()):
             moves.append(mv)

@@ -52,6 +52,11 @@ def main():
            ([m["name"] for m in real]
             + [f["name"] for m in real for f in m.get("forms", [])]),
            "dump/monsters.json")
+    # species whose IVs can't come from breeding (legendaries, babies) - PokeMMO
+    # lets you re-roll a legendary's IVs, so "wrong breed" isn't the right advice.
+    _write("no_breed.txt",
+           (m["name"] for m in real if m.get("egg_groups") == ["cannot breed"]),
+           "dump/monsters.json")
 
     stats = {m["name"]: [m["stats"][k] for k in
                          ("hp", "attack", "defense", "sp_attack", "sp_defense", "speed")]
