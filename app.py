@@ -152,7 +152,7 @@ class App:
         self.cells = {}  # (raid, position) -> ttk.Button
         self.tips = {}   # (raid, position) -> Tooltip
 
-        ttk.Label(self.table, text="Raid", width=11, anchor="w").grid(
+        ttk.Label(self.table, text="", width=11, anchor="w").grid(
             row=0, column=0, padx=2, pady=(0, 4), sticky="w")
         for c, pos in enumerate(POSITIONS, start=1):
             ttk.Label(self.table, text=pos, anchor="center").grid(
@@ -160,8 +160,11 @@ class App:
             self.table.columnconfigure(c, weight=1, uniform="pos")
 
         for r, raid in enumerate(RAIDS, start=1):
-            ttk.Label(self.table, text=raid, width=11, anchor="w").grid(
-                row=r, column=0, padx=2, pady=2, sticky="w")
+            name = ttk.Label(self.table, text=raid, width=11, anchor="w",
+                             cursor="hand2")
+            name.grid(row=r, column=0, padx=2, pady=2, sticky="w")
+            name.bind("<Button-1>", lambda e, ra=raid: self.open_raid(ra))
+            Tooltip(name, "Raid strategy")
             self.table.rowconfigure(r, weight=1)
             for c, pos in enumerate(POSITIONS, start=1):
                 btn = ttk.Button(self.table, takefocus=False,
@@ -215,6 +218,11 @@ class App:
 
     def open_cell(self, raid, position):
         ScanWindow(self, raid, position)
+
+    def open_raid(self, raid):
+        # clicking a raid name -> the in-raid strategy / moves table (TODO)
+        messagebox.showinfo(f"{raid} strategy",
+                            "The moves table for this raid isn't built yet.")
 
     # ---------------- Character menu ----------------
     def character_new(self):
