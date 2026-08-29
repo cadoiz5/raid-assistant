@@ -3,10 +3,13 @@
 moves_window.py - the in-raid move order.
 
 A strat file may carry a "[Moves]" section: one "Turn N" block per turn, and
-under it up to four "P<n> - <what to click>" lines. This window shows that as a
-turn x position table (mon name over the move). A checkbox on each P1..P4
-header greys out that column (for positions you aren't playing); clicking a
-turn's row greys it out (turn done).
+under it up to four "P<n> - ..." lines. A line is either a fixed "Mon Move",
+or just "Mon" followed by "* <Ad> <Move>" lines - one per possible spawn ad -
+when that turn's move depends on which ad appeared alongside the boss.
+
+This window shows the table (mon name over the move). A checkbox on each
+P1..P4 header greys that column; clicking a turn's row greys it (turn done);
+if the strat has ad-dependent moves, a dropdown (top right) picks the ad.
 """
 
 import os
@@ -25,36 +28,6 @@ try:
                         key=len, reverse=True)
 except OSError:
     _MOVES = []
-
-
-def parse_moves(path):
-    """-> [{'turn': 'Turn 1', 'actions': {'P1': '...', ...}}, ...] from the
-    file's [Moves] section ([] if there isn't one)."""
-    try:
-        with open(path, encoding="utf-8") as fh:
-            lines = fh.read().splitlines()
-    except OSError:
-        return []
-    turns, cur, in_moves = [], None, False
-    for raw in lines:
-        s = raw.strip()
-        if not s or s.startswith("#"):
-            continue
-        head = re.match(r"\[([^\]]+)\]$", s)
-        if head:
-            in_moves = head.group(1).strip().lower() == "moves"
-            cur = None
-            continue
-        if not in_moves:
-            continue
-        if re.match(r"turn\b", s, re.I):
-            cur = {"turn": s, "actions": {}}
-            turns.append(cur)
-        elif cur is not None:
-            m = re.match(r"(P[1-4])\s*[-–:]\s*(.+)$", s)
-            if m:
-                cur["actions"][m.group(1)] = m.group(2).strip()
-    return turns
 
 
 def split_action(text):
@@ -77,12 +50,51 @@ def split_action(text):
     return (parts[0], parts[1]) if len(parts) == 2 else (text, "")
 
 
+def parse_moves(path):
+    """-> [{'turn': 'Turn 1', 'actions': {'P1': act, ...}}, ...] from the file's
+    [Moves] section. act = {'mon', 'move', 'by_ad': {ad: move}}."""
+    try:
+        with open(path, encoding="utf-8") as fh:
+            lines = fh.read().splitlines()
+    except OSError:
+        return []
+    turns, cur, last, in_moves = [], None, None, False
+    for raw in lines:
+        s = raw.strip()
+        if not s or s.startswith("#"):
+            continue
+        head = re.match(r"\[([^\]]+)\]$", s)
+        if head:
+            in_moves = head.group(1).strip().lower() == "moves"
+            cur = last = None
+            continue
+        if not in_moves:
+            continue
+        if re.match(r"turn\b", s, re.I):
+            cur = {"turn": s, "actions": {}}
+            turns.append(cur)
+            last = None
+        elif cur is None:
+            continue
+        elif s.startswith("*"):
+            m = re.match(r"\*\s*([A-Za-z]+)[:\s]+(.+?)(?:\s+ad)?$", s, re.I)
+            if m and last:
+                cur["actions"][last]["by_ad"][m.group(1).title()] = m.group(2).strip()
+        else:
+            m = re.match(r"(P[1-4])\s*[-–:]\s*(.*)$", s)
+            if m:
+                mon, mv = split_action(m.group(2).strip())
+                cur["actions"][m.group(1)] = {"mon": mon, "move": mv, "by_ad": {}}
+                last = m.group(1)
+    return turns
+
+
 class MovesWindow:
     def __init__(self, app, raid):
         self.app, self.raid = app, raid
         self.strats = strat_names(raid)
         self.strat = self.strats[0] if self.strats else None
-        self.turns = []
+        self.turns, self.ads = [], []
 
         self.win = win = tk.Toplevel(app.root)
         win.title(f"{raid} · moves")
@@ -102,13 +114,20 @@ class MovesWindow:
         checked = set(saved)
         self.col_vars = {p: tk.BooleanVar(value=p in checked) for p in POSITIONS}
 
+        top = ttk.Frame(frame)
+        top.pack(fill="x")
+
+        self.ad_var = tk.StringVar()
+        self.ad_lbl = ttk.Label(top, text="Ad")
+        self.ad_cb = ttk.Combobox(top, state="readonly", width=13,
+                                  textvariable=self.ad_var)
+        self.ad_cb.bind("<<ComboboxSelected>>", self._on_ad)
+
         if len(self.strats) > 1:
-            top = ttk.Frame(frame)
-            top.pack(fill="x")
             self.strat_var = tk.StringVar(value=self.strat)
             sb = ttk.Combobox(top, state="readonly", width=16,
                               textvariable=self.strat_var, values=self.strats)
-            sb.pack(side="right")
+            sb.pack(side="left")
             sb.bind("<<ComboboxSelected>>", self._change_strat)
 
         self.body = ttk.Frame(frame)
@@ -128,15 +147,37 @@ class MovesWindow:
                 if self.strat else None)
         self.turns = parse_moves(path) if path else []
         self.done = set()  # turn indices ticked off during the raid
+        self._refresh_ads()
         if self.turns:
             self.info.config(text=f"{len(self.turns)} turns   ·   strat: {self.strat}")
         else:
             self.info.config(text=f"No [Moves] table in {self.strat or 'this raid'}.")
         self._build_table()
 
+    def _refresh_ads(self):
+        seen = []
+        for t in self.turns:
+            for a in t["actions"].values():
+                for ad in a["by_ad"]:
+                    if ad not in seen:
+                        seen.append(ad)
+        self.ads = seen
+        self.ad_cb.pack_forget()
+        self.ad_lbl.pack_forget()
+        if self.ads:
+            self.ad_cb["values"] = self.ads
+            cur = self.app.prefs.get("moves_ad")
+            self.ad_var.set(cur if cur in self.ads else self.ads[0])
+            self.ad_cb.pack(side="right")
+            self.ad_lbl.pack(side="right", padx=(0, 4))
+
     def _change_strat(self, _=None):
         self.strat = self.strat_var.get()
         self._reload()
+
+    def _on_ad(self, _=None):
+        self.app.prefs.set("moves_ad", self.ad_var.get())
+        self._build_table()
 
     def _on_check(self):
         cols = self.app.prefs.get("moves_cols")
@@ -146,6 +187,13 @@ class MovesWindow:
         self._paint()
 
     # ---- table ----
+    def _cell_text(self, act):
+        if act is None:
+            return "", ""
+        mv = act["by_ad"].get(self.ad_var.get(), act["move"]) if act["by_ad"] \
+            else act["move"]
+        return act["mon"], mv
+
     def _build_table(self):
         if self.table is not None:
             self.table.destroy()
@@ -167,7 +215,7 @@ class MovesWindow:
             tl.grid(row=i + 1, column=0, sticky="nw", padx=(0, 8), pady=3)
             self._painters.append((i, None, [(tl, "#000000")]))
             for c, p in enumerate(POSITIONS, start=1):
-                mon, mv = split_action(turn["actions"].get(p, ""))
+                mon, mv = self._cell_text(turn["actions"].get(p))
                 cell = ttk.Frame(self.table, relief="solid", borderwidth=1,
                                  padding=(6, 3), cursor="hand2")
                 nl = ttk.Label(cell, text=mon or "–", font=bold, cursor="hand2")

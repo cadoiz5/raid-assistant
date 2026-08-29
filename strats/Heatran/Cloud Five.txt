@@ -39,11 +39,26 @@ Ability: Cloud Nine
 Turn 1
 P1 - Golduck Water Sport
 P2 - Swanna Lucky Chant
-P3 - Infernape Captivate
-P4 - Whimsicott Switcheroo
+P3 - Infernape 
+* Charizard Captivate Ad
+* Magmortar Captivate Ad
+* Garchomp Switcheroo Ad
+* Golem Switcheroo Ad
+* Salamence Scary Face Ad
+P4 - Whimsicott
+* Charizard Switcheroo Ad
+* Magmortar Switcheroo Ad
+* Garchomp Charm Ad
+* Golem Charm Ad
+* Salamence Switcheroo Ad
 
 Turn 2
 P1 - Golduck Knock Off
 P2 - Flygon Earth Power
-P3 - Swampert Scary Face
+P3 - Swampert
+* Charizard Scary Face Ad
+* Magmortar Scary Face Ad
+* Garchomp Fling Ad
+* Golem Fling Ad
+* Salamence Captivate Ad
 P4 - Flygon Earth Power

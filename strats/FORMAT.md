@@ -116,9 +116,31 @@ P1 - Golduck Knock Off
 ```
 
 Clicking a raid's name in the main table opens this as a turn × position
-table (mon name over the move), with a toggle to show every position or just
-one. The mon and move are split automatically; write `P1 - Golduck: Water
-Sport` if you want to be explicit.
+table (mon name over the move). Each `P1..P4` header has a checkbox that
+greys that column; clicking a turn's row greys it (turn done). The mon and
+move are split automatically; write `P1 - Golduck: Water Sport` to be
+explicit.
+
+### Ad-dependent moves
+
+If a turn's move depends on which **ad** spawned alongside the boss, put just
+the mon on the `P<n> -` line and list one `* <Ad> <Move>` line per possible
+ad. A dropdown (top right of the window) picks the ad.
+
+```
+Turn 1
+P1 - Golduck Water Sport        (fixed - same for every ad)
+P3 - Infernape
+* Charizard: Captivate
+* Magmortar: Captivate
+* Garchomp: Switcheroo
+* Golem: Switcheroo
+* Salamence: Scary Face
+```
+
+The dropdown lists whatever ads appear in the section, in first-seen order,
+and defaults to the first. A trailing " Ad" on a `*` line is ignored, so
+`* Charizard Captivate Ad` also works.
 
 A check reads `–` when the block doesn't pin anything for it, and `⋯` when an
 earlier breed check has to be fixed first.
