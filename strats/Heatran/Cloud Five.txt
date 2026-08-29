@@ -1,0 +1,35 @@
+# Heatran raid — "Cloud Five" strat.
+# Constraints for all four positions. Format: see strats/FORMAT.md
+
+[P1]
+
+1 - Golduck @ Sitrus Berry
+Ability: Cloud Nine
+301 HP / 238 SpD / 294+ Spe
+- Water Sport
+- Knock Off
+
+2 - Altaria @ Aguav Berry
+Ability: Cloud Nine
+354 HP / 267 SpD / 180-226 Spe
+- Defog
+
+3 - Swoobat
+
+4 - Pelipper
+
+5 - Swanna
+
+6 - Kingdra
+
+[P2]
+
+# TODO
+
+[P3]
+
+# TODO
+
+[P4]
+
+# TODO

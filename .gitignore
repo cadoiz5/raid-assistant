@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Local user data
+prefs.json
+saves/
+
+# OS
+Thumbs.db
+.DS_Store
