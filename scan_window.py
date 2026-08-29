@@ -152,8 +152,8 @@ def _parse_block(block):
         return None
     species, _, item = m.group(2).partition("@")
     slot = {"num": int(m.group(1)), "species": species.strip(),
-            "item": item.strip() or None, "ability": None,
-            "bounds": {}, "moves": [], "raw": block.strip()}
+            "item": [i.strip() for i in item.split("/") if i.strip()] or None,
+            "ability": None, "bounds": {}, "moves": [], "raw": block.strip()}
     for ln in lines[1:]:
         if ln.lower().startswith("ability:"):
             slot["ability"] = ln.split(":", 1)[1].strip()
@@ -670,11 +670,11 @@ def check_slot(slot, block):
 
     if not slot["item"]:
         c_it = _chk("Item", "na", "not pinned")
-    elif _norm(scan.get("item")) == _norm(slot["item"]):
-        c_it = _chk("Item", "pass", slot["item"])
+    elif _norm(scan.get("item")) in {_norm(i) for i in slot["item"]}:
+        c_it = _chk("Item", "pass", scan.get("item") or slot["item"][0])
     else:
-        c_it = _chk("Item", "fail",
-                    f"holding {scan.get('item') or 'nothing'} — give {slot['item']}")
+        c_it = _chk("Item", "fail", f"holding {scan.get('item') or 'nothing'} — give "
+                    + " or ".join(slot["item"]))
 
     r["training"] = [c_lv, c_ev, c_ab, c_mv, c_it]
     return r

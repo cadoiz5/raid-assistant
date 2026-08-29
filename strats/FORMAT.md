@@ -43,6 +43,13 @@ Ability: Cloud Nine             optional — required ability.
 The leading `N - ` is the team slot (1–6). Later, two blocks with the same slot
 number will mean "either of these is acceptable for that slot" (replacements).
 
+To accept **any of several items**, separate them with `/` on the header line —
+the Item check passes if the held item is any of them:
+
+```
+1 - Golduck @ Sitrus Berry / Aguav Berry / Figy Berry
+```
+
 ## Stat bounds
 
 Each entry is `<number><modifier> <STAT>`, where STAT is one of
