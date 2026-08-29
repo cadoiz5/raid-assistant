@@ -203,10 +203,20 @@ def parse_scan(block):
     return d
 
 
-# ---------------- EV-fix suggestion ----------------
+# ---------------- EV / IV / nature fix suggestions ----------------
 def _final_stat(base, iv, ev, mult):
     core = 2 * base + iv + ev // 4
     return core + 110 if mult is None else int((core + 5) * mult)
+
+
+def _mult_fn(nature):
+    """nature name -> f(stat_index) giving the level-100 multiplier (None for HP).
+    Returns None if the nature isn't recognised."""
+    nat = NATURES.get((nature or "").lower())
+    if nat is None:
+        return None
+    plus, minus = nat
+    return lambda i: None if i == 0 else 1.1 if i == plus else 0.9 if i == minus else 1.0
 
 
 def _ev_window(base, iv, mult, lo, hi):
@@ -227,13 +237,11 @@ def suggest_evs(species, scan, bounds):
     Objective: fewest stats changed, then fewest total EV points moved.
     """
     base = BASE_STATS.get(species)
-    nat = NATURES.get((scan.get("nature") or "").lower())
-    if not base or nat is None:
+    mult = _mult_fn(scan.get("nature"))
+    if not base or mult is None:
         return None
-    plus, minus = nat
     ivs, cur_ev = scan.get("ivs", {}), scan.get("evs", {})
     cur = {s: cur_ev.get(s, 0) for s in STATS}
-    mult = lambda i: None if i == 0 else 1.1 if i == plus else 0.9 if i == minus else 1.0
 
     target, changed, windows = dict(cur), set(), {}
     for stat, (lo, hi) in bounds.items():
@@ -288,12 +296,10 @@ def suggest_ivs(species, scan, bounds):
     IVs are independent per stat, so each window stands on its own.
     """
     base = BASE_STATS.get(species)
-    nat = NATURES.get((scan.get("nature") or "").lower())
-    if not base or nat is None:
+    mult = _mult_fn(scan.get("nature"))
+    if not base or mult is None:
         return None
-    plus, minus = nat
     ivs = scan.get("ivs", {})
-    mult = lambda i: None if i == 0 else 1.1 if i == plus else 0.9 if i == minus else 1.0
     out = {}
     for stat, (lo, hi) in bounds.items():
         i = STATS.index(stat)
@@ -303,6 +309,60 @@ def suggest_ivs(species, scan, bounds):
         if not w[0] <= ivs.get(stat, 31) <= w[1]:
             out[stat] = w
     return ("ok", out)
+
+
+def _min_total_ev(base, mult, bounds):
+    """Least total EV to meet every bound, assuming IVs can be re-rolled freely.
+    None if a bound is unreachable at all or the total blows the 510 cap."""
+    total = 0
+    for stat, (lo, hi) in bounds.items():
+        i = STATS.index(stat)
+        w = _iv_window(base[i], mult(i), lo, hi)
+        if w is None:
+            return None
+        feas = [e for e in range(0, 253)
+                if lo <= _final_stat(base[i], w[1], e, mult(i)) <= hi]
+        if not feas:
+            return None
+        total += -(-feas[0] // 4) * 4
+    return total if total <= EV_CAP else None
+
+
+def suggest_nature(species, bounds, exclude=None):
+    """Best re-roll nature for `bounds` (IVs assumed free), other than `exclude`.
+    Ranked by: least total EV needed, then smallest stat given up to the -10%
+    (neutral = nothing given up), then name for a stable pick. Returns a
+    Title-case name, or None if nothing fits."""
+    base = BASE_STATS.get(species)
+    if not base:
+        return None
+    ranked = []
+    for name, (plus, minus) in NATURES.items():
+        if name == (exclude or "").lower():
+            continue
+        cost = _min_total_ev(base, _mult_fn(name), bounds)
+        if cost is None:
+            continue
+        give_up = 0 if minus is None else base[minus]
+        ranked.append((cost, give_up, name))
+    ranked.sort()
+    return ranked[0][2].title() if ranked else None
+
+
+def _iv_targets(species, nature, bounds):
+    """{stat: (lo, hi)} IV window for every constrained stat under `nature`,
+    skipping stats where any IV works. {} if data is missing."""
+    base = BASE_STATS.get(species)
+    mult = _mult_fn(nature)
+    if not base or mult is None:
+        return {}
+    out = {}
+    for stat, (lo, hi) in bounds.items():
+        i = STATS.index(stat)
+        w = _iv_window(base[i], mult(i), lo, hi)
+        if w and w != (0, 31):
+            out[stat] = w
+    return out
 
 
 def _ev_line(new_evs, scan):
@@ -315,7 +375,7 @@ def _ev_line(new_evs, scan):
 
 
 def _suggest_fix(fails, slot, scan):
-    """Append a '→ EVs: ...' and/or '→ IVs: ...' hint for a stat-bound failure."""
+    """Append '→ Nature / IVs / EVs' hints for a stat-bound failure."""
     species, bounds = slot["species"], slot["bounds"]
     sug = suggest_evs(species, scan, bounds)
     if sug and sug[0] == "ok" and sug[1]:
@@ -323,25 +383,46 @@ def _suggest_fix(fails, slot, scan):
         return
     if not sug or sug[0] != "breed":
         return
-    # EVs alone can't do it. A legendary can re-roll its IVs - say which to aim for.
-    if _norm(species) in NO_BREED:
+    if _norm(species) not in NO_BREED:
+        fails.append("→ can't fix with EVs — wrong breed")
+        return
+
+    # A legendary can re-roll its nature and IVs - work out a target that fits.
+    base = BASE_STATS.get(species)
+    cur_mult = _mult_fn(scan.get("nature"))
+    cur_ok = bool(base) and cur_mult is not None \
+        and _min_total_ev(base, cur_mult, bounds) is not None
+
+    if cur_ok:
+        # keep the nature; the IVs (and maybe some EVs) are what's off
         ivf = suggest_ivs(species, scan, bounds)
-        if ivf and ivf[0] == "impossible":
-            fails.append(f"→ can't get {ivf[1]} in range with any IV — wrong nature")
-            return
         if ivf and ivf[0] == "ok" and ivf[1]:
             fails.append("→ IVs: " + ", ".join(
                 f"{s} {_fmt_bound(*ivf[1][s])}" for s in STATS if s in ivf[1]))
             fixed = dict(scan, ivs=dict(scan.get("ivs", {})))
-            for s, (wlo, whi) in ivf[1].items():
-                fixed["ivs"][s] = min(max(fixed["ivs"].get(s, 31), wlo), whi)
+            for s, (lo, hi) in ivf[1].items():
+                fixed["ivs"][s] = min(max(fixed["ivs"].get(s, 31), lo), hi)
             ev2 = suggest_evs(species, fixed, bounds)
-            if ev2 and ev2[0] == "ok" and ev2[1]:
-                fails.append(_ev_line(ev2[1], scan))
-            return
-        fails.append("→ bounds can't be met with any IVs/EVs — wrong nature")
+        else:
+            ev2 = suggest_evs(species, scan, bounds)
+        if ev2 and ev2[0] == "ok" and ev2[1]:
+            fails.append(_ev_line(ev2[1], scan))
         return
-    fails.append("→ can't fix with EVs — wrong breed")
+
+    nature = suggest_nature(species, bounds, exclude=scan.get("nature"))
+    if not nature:
+        fails.append("→ bounds can't be met even with a different nature")
+        return
+    fails.append(f"→ Nature: {nature}")
+    tgt = _iv_targets(species, nature.lower(), bounds)
+    if tgt:
+        fails.append("→ IVs: " + ", ".join(
+            f"{s} {_fmt_bound(*tgt[s])}" for s in STATS if s in tgt))
+    ivs = dict(scan.get("ivs", {}))
+    ivs.update({s: hi for s, (lo, hi) in tgt.items()})
+    ev2 = suggest_evs(species, dict(scan, nature=nature.lower(), ivs=ivs), bounds)
+    if ev2 and ev2[0] == "ok" and ev2[1]:
+        fails.append(_ev_line(ev2[1], scan))
 
 
 def load_scans(path):
