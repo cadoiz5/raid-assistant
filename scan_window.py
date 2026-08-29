@@ -259,6 +259,10 @@ def parse_scan(block):
             d["nature"] = ln.rsplit(" ", 1)[0].strip()
         elif ln.startswith("-"):
             d["moves"].append(ln[1:].strip())
+    # drop impossible values from a row the OCR mislabelled (EVs landing in the
+    # IVs line, etc.) so downstream maths doesn't choke on them
+    d["ivs"] = {k: v for k, v in d["ivs"].items() if 0 <= v <= 31}
+    d["evs"] = {k: v for k, v in d["evs"].items() if 0 <= v <= 252}
     return d
 
 
@@ -543,11 +547,18 @@ def check_slot(slot, block):
     eff = _project_stats(want, scan) if projected else scan["stats"]
     reroll = "re-roll" if legendary else "breed"
 
+    # does the mon, as it stands, already satisfy every stat bound?
+    stats_pass = bool(bounds) and bool(eff) and all(
+        eff.get(s) is not None and lo <= eff[s] <= hi
+        for s, (lo, hi) in bounds.items())
+
     # ---------- BREED ----------
     # Nature first - the IV and EV checks lean on it.
     nat_ok = None
     if not bounds:
         c_nat = _chk("Nature", "na", "no stat bounds")
+    elif stats_pass:
+        c_nat, nat_ok = _chk("Nature", "pass", f"{scan['nature']} — stats in range"), True
     elif not base or mult is None:
         c_nat = _chk("Nature", "na", "nature not read")
     elif _min_total_ev(base, mult, bounds) is not None:
@@ -560,6 +571,8 @@ def check_slot(slot, block):
 
     if not bounds:
         c_iv = _chk("IVs", "na", "no stat bounds")
+    elif stats_pass:
+        c_iv = _chk("IVs", "pass", "stats already meet the bounds")
     elif not base or mult is None:
         c_iv = _chk("IVs", "na", "IVs / nature not read")
     elif nat_ok is False:
@@ -605,6 +618,14 @@ def check_slot(slot, block):
     r["breed"] = [c_iv, c_nat, c_ha, c_egg]
 
     # ---------- TRAINING ----------
+    lv = scan.get("level")
+    if lv == 100:
+        c_lv = _chk("Level", "pass", "100")
+    elif lv is None:
+        c_lv = _chk("Level", "fail", "not read — must be 100")
+    else:
+        c_lv = _chk("Level", "fail", f"{lv} — train it to 100")
+
     if not bounds:
         c_ev = _chk("EVs", "na", "no stat bounds")
     elif nat_ok is False or c_iv["status"] == "fail":
@@ -655,14 +676,14 @@ def check_slot(slot, block):
         c_it = _chk("Item", "fail",
                     f"holding {scan.get('item') or 'nothing'} — give {slot['item']}")
 
-    r["training"] = [c_ev, c_ab, c_mv, c_it]
+    r["training"] = [c_lv, c_ev, c_ab, c_mv, c_it]
     return r
 
 
 def slot_ok(slot, block):
     """True when every applicable check passes (grid / list roll-up)."""
     r = check_slot(slot, block)
-    if not r["species_ok"] or r["evolve"] or not r["level"][1]:
+    if not r["species_ok"] or r["evolve"]:
         return False
     return all(c["status"] != "fail" for c in r["breed"] + r["training"])
 
@@ -675,8 +696,6 @@ def validate(slot, block):
     out = []
     if r["evolve"]:
         out.append(f"evolve {r['evolve']}")
-    if not r["level"][1]:
-        out.append(f"level {r['level'][0] if r['level'][0] is not None else '?'}, need 100")
     out += [f"{c['label']}: {c['note']}" for c in r["breed"] + r["training"]
             if c["status"] == "fail"]
     return out
@@ -768,7 +787,7 @@ class ScanWindow:
                                 font=("TkDefaultFont", 9), justify="left")
         self.banner.pack(anchor="w", pady=(2, 2))
 
-        self.tree = ttk.Treeview(right, columns=("v",), show="tree", height=11,
+        self.tree = ttk.Treeview(right, columns=("v",), show="tree", height=12,
                                  selectmode="none")
         self.tree.column("#0", width=150, stretch=False, anchor="w")
         self.tree.column("v", width=360, anchor="w")
@@ -875,9 +894,6 @@ class ScanWindow:
         extra = []
         if r["evolve"]:
             extra.append(f"⚑ evolve  {r['evolve']}")
-        lvl, lok = r["level"]
-        if not lok:
-            extra.append(f"⚑ level {lvl if lvl is not None else '?'} → must be 100")
         ok = slot_ok(slot, self.scans[num])
         self.banner.config(
             text="      ".join([("✓ all checks pass" if ok else "✗ needs work")] + extra),

@@ -78,10 +78,15 @@ legendary):
 
 | Check    | Passes when |
 |----------|-------------|
+| Level    | the mon is level 100 |
 | EVs      | the (projected) level-100 stats are all in range |
 | Ability  | the mon is currently on the pinned ability |
 | Moveset  | every pinned non-egg move is present |
 | Item     | the held item matches `@ Item` |
+
+The IVs and Nature checks pass automatically whenever the scanned final
+stats already sit inside the bounds — they only flag a problem when the
+stats are out of range and re-breeding is the reason.
 
 A check reads `–` when the block doesn't pin anything for it, and `⋯` when an
 earlier breed check has to be fixed first.

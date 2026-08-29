@@ -331,10 +331,18 @@ def parse(rows):
             d["gender"] = "M"
         break
 
-    # --- the three 6-number rows, top to bottom = Stats, IVs, EVs ---
+    # --- the three 6-number rows: on the card they're Stats, IVs, EVs top to
+    # bottom. Trust that order when all three scanned; if one was missed, place
+    # what we have by content (a stat >252 = Stats row, all <=31 = IVs row). ---
     sixes = [v[:6] for v in (_ints(t) for t in texts) if len(v) >= 6]
-    for key, vals in zip(("stats", "ivs", "evs"), sixes):
-        d[key] = vals
+    if len(sixes) >= 3:
+        d["stats"], d["ivs"], d["evs"] = sixes[0], sixes[1], sixes[2]
+    else:
+        for vals in sixes:
+            key = ("stats" if any(x > 252 for x in vals)
+                   else "ivs" if max(vals) <= 31 else "evs")
+            if d[key] is None:
+                d[key] = vals
 
     # --- nature: fuzzy-match a word anywhere ---
     for t in texts:
