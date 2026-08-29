@@ -11,7 +11,9 @@ per-raid "strat" constraints (species / item / ability / stat bounds / moves).
 | `screenshot` | CLI: grab a screen region, OCR it, emit a PokePaste to the clipboard. Run `python screenshot`. Flags: `--image`, `--bbox x1,y1,x2,y2`, `--select-only`, `--scale`, `--debug`. |
 | `app.py` | Main GUI. Coverage grid of the 6 raids x positions P1-P4, scoped to a "character" (a PokeMMO account). Run `python app.py`. |
 | `scan_window.py` | Per-position scan window: scan 6 Pokemon, validate each against the loaded strat. |
-| `build_lists.py` | Regenerates the reference name lists + `species_stats.json` from PokeMMO's dex dump (`../dump/*.json`). |
+| `build_lists.py` | Regenerates `data/` (reference name lists + `species_stats.json`) from PokeMMO's dex dump (`../dump/*.json`). |
+| `data/` | Committed reference data the parser snaps to: `moves.txt`, `abilities.txt`, `items.txt`, `species.txt`, `species_stats.json`. |
+| `samples/` | Real summary-card screenshots for testing (`sample*.png`). |
 | `strats/<Raid>/<Strat>.txt` | Constraint files for a raid strat (all 4 positions). Format: `strats/FORMAT.md`. |
 
 ## Setup
@@ -29,9 +31,8 @@ Plus the Tesseract OCR engine:
 The script auto-detects Tesseract on `PATH` or in the usual
 `Program Files\Tesseract-OCR` locations.
 
-The reference lists (`moves.txt`, `abilities.txt`, `items.txt`, `species.txt`,
-`species_stats.json`) are committed, so the tools work out of the box. Rerun
-`python build_lists.py` only when the PokeMMO dex dump is refreshed.
+The `data/` reference lists are committed, so the tools work out of the box.
+Rerun `python build_lists.py` only when the PokeMMO dex dump is refreshed.
 
 ## Local data (not committed)
 

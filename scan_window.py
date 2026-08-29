@@ -49,7 +49,7 @@ NATURES = {
 }
 
 try:
-    with open(os.path.join(HERE, "species_stats.json"), encoding="utf-8") as _fh:
+    with open(os.path.join(HERE, "data", "species_stats.json"), encoding="utf-8") as _fh:
         BASE_STATS = json.load(_fh)  # {"Golduck": [hp, atk, def, spa, spd, spe], ...}
 except (OSError, ValueError):
     BASE_STATS = {}
@@ -567,7 +567,8 @@ class ScanWindow:
     def open_image(self):
         # no button for now - kept for later / manual use
         path = filedialog.askopenfilename(parent=self.win, filetypes=[
-            ("Images", "*.png *.jpg *.jpeg *.bmp"), ("All files", "*.*")])
+            ("Images", "*.png *.jpg *.jpeg *.bmp"), ("All files", "*.*")],
+            initialdir=os.path.join(HERE, "samples"))
         if not path:
             return
         self._status("reading...")

@@ -16,8 +16,9 @@ Dependencies:
       - macOS:   brew install tesseract
       - Linux:   sudo apt install tesseract-ocr
 
-Reference lists (moves.txt / abilities.txt / items.txt / species.txt) let the
-parser snap OCR text to real names. Build them from PokeMMO's dex dump with:
+Reference lists (data/moves.txt, data/abilities.txt, data/items.txt,
+data/species.txt) let the parser snap OCR text to real names. Build them from
+PokeMMO's dex dump with:
     python build_lists.py
 The script still runs without them, just with rawer output.
 """
@@ -92,13 +93,13 @@ STAT_LABELS = ["HP", "Atk", "Def", "SpA", "SpD", "Spe"]
 
 class Ref:
     """A reference name list (moves / abilities / items / species) loaded from a
-    txt file next to this script - one name per line, '#' lines ignored. Build
+    txt file in the data/ folder - one name per line, '#' lines ignored. Build
     the files from PokeMMO's dex dump with `python build_lists.py`. Missing file
     => empty list => that snap is silently skipped."""
 
     def __init__(self, fname):
         self.names, self.lc, self.key = [], [], []
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), fname)
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", fname)
         try:
             with open(path, encoding="utf-8") as fh:
                 for ln in fh:
