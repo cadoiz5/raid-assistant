@@ -580,11 +580,11 @@ def check_slot(slot, block):
                     else "no EV spread reaches the bounds")
 
     if not pinned_ab:
-        c_ab = _chk("Ability", "na", "not pinned")
+        c_ab = _chk("Ability", "na", on_ab or "not read")
     elif not on_ab:
         c_ab = _chk("Ability", "missing", "missing information")
     elif _norm(on_ab) == _norm(want_ab):
-        c_ab = _chk("Ability", "pass", want_ab)
+        c_ab = _chk("Ability", "pass", on_ab)
     else:
         tag = " (HA)" if (ha and _norm(want_ab) == _norm(ha)) else ""
         c_ab = _chk("Ability", "fail", f"{on_ab} -- need {want_ab}{tag}")
