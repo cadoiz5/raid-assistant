@@ -4,8 +4,9 @@ moves_window.py - the in-raid move order.
 
 A strat file may carry a "[Moves]" section: one "Turn N" block per turn, and
 under it up to four "P<n> - <what to click>" lines. This window shows that as a
-turn x position table (mon name over the move), with a toggle to see every
-position or just one. The window sizes itself to the visible columns.
+turn x position table (mon name over the move). A checkbox on each P1..P4
+header greys out that column (for positions you aren't playing); clicking a
+turn's row greys it out (turn done).
 """
 
 import os
@@ -90,17 +91,12 @@ class MovesWindow:
         frame = ttk.Frame(win, padding=10)
         frame.pack(fill="both", expand=True)
 
-        top = ttk.Frame(frame)
-        top.pack(fill="x")
-
-        self.view_var = tk.StringVar(
-            value=app.prefs.get("moves_view") or "All positions")
-        vb = ttk.Combobox(top, state="readonly", width=13, textvariable=self.view_var,
-                          values=["All positions", *POSITIONS])
-        vb.pack(side="left")
-        vb.bind("<<ComboboxSelected>>", self._on_view)
+        checked = set(app.prefs.get("moves_cols") or POSITIONS)
+        self.col_vars = {p: tk.BooleanVar(value=p in checked) for p in POSITIONS}
 
         if len(self.strats) > 1:
+            top = ttk.Frame(frame)
+            top.pack(fill="x")
             self.strat_var = tk.StringVar(value=self.strat)
             sb = ttk.Combobox(top, state="readonly", width=16,
                               textvariable=self.strat_var, values=self.strats)
@@ -134,9 +130,10 @@ class MovesWindow:
         self.strat = self.strat_var.get()
         self._reload()
 
-    def _on_view(self, _=None):
-        self.app.prefs.set("moves_view", self.view_var.get())
-        self._build_table()
+    def _on_check(self):
+        self.app.prefs.set("moves_cols",
+                           [p for p in POSITIONS if self.col_vars[p].get()])
+        self._paint()
 
     # ---- table ----
     def _build_table(self):
@@ -145,22 +142,21 @@ class MovesWindow:
         self.table = ttk.Frame(self.body)
         self.table.pack(anchor="nw")
 
-        cols = (POSITIONS if self.view_var.get() == "All positions"
-                else [self.view_var.get()])
         bold = ("TkDefaultFont", 9, "bold")
-        self._rows = []  # per turn: [(label, normal_fg), ...]
+        # (turn index, position or None, [(label, normal_fg), ...])
+        self._painters = []
 
         ttk.Label(self.table, text="", width=7).grid(row=0, column=0, sticky="w")
-        for c, p in enumerate(cols, start=1):
-            ttk.Label(self.table, text=p, font=bold, anchor="center").grid(
-                row=0, column=c, sticky="ew", padx=1, pady=(0, 3))
+        for c, p in enumerate(POSITIONS, start=1):
+            ttk.Checkbutton(self.table, text=p, variable=self.col_vars[p],
+                            command=self._on_check).grid(
+                row=0, column=c, sticky="w", padx=1, pady=(0, 3))
 
         for i, turn in enumerate(self.turns):
-            paint = []
             tl = ttk.Label(self.table, text=turn["turn"], anchor="nw")
             tl.grid(row=i + 1, column=0, sticky="nw", padx=(0, 8), pady=3)
-            paint.append((tl, "#000000"))
-            for c, p in enumerate(cols, start=1):
+            self._painters.append((i, None, [(tl, "#000000")]))
+            for c, p in enumerate(POSITIONS, start=1):
                 mon, mv = split_action(turn["actions"].get(p, ""))
                 cell = ttk.Frame(self.table, relief="solid", borderwidth=1,
                                  padding=(6, 3), cursor="hand2")
@@ -169,22 +165,23 @@ class MovesWindow:
                 nl.pack(anchor="w")
                 ml.pack(anchor="w")
                 cell.grid(row=i + 1, column=c, sticky="ew", padx=1, pady=1)
-                paint += [(nl, "#000000"), (ml, "#606060")]
+                self._painters.append((i, p, [(nl, "#000000"), (ml, "#606060")]))
                 for w in (cell, nl, ml):
                     w.bind("<Button-1>", lambda e, n=i: self._toggle_row(n))
-            self._rows.append(paint)
-            self._paint_row(i)
 
-        for c in range(1, len(cols) + 1):
+        for c in range(1, len(POSITIONS) + 1):
             self.table.columnconfigure(c, weight=1, uniform="pos")
 
-        self.win.geometry("")  # shrink-wrap to the visible columns
+        self._paint()
+        self.win.geometry("")  # shrink-wrap to the table
 
     def _toggle_row(self, i):
         self.done.symmetric_difference_update({i})
-        self._paint_row(i)
+        self._paint()
 
-    def _paint_row(self, i):
-        muted = i in self.done
-        for lbl, fg in self._rows[i]:
-            lbl.configure(foreground="#bcbcbc" if muted else fg)
+    def _paint(self):
+        for turn_i, pos, items in self._painters:
+            muted = turn_i in self.done or (
+                pos is not None and not self.col_vars[pos].get())
+            for lbl, fg in items:
+                lbl.configure(foreground="#bcbcbc" if muted else fg)
