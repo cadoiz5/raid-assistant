@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-poke_ocr.py - Select a region of your screen showing a Pokemon summary,
+screenshot.py - Select a region of your screen showing a Pokemon summary,
 OCR it, and generate a PokePaste (copied to your clipboard).
 
 Usage:
-    python poke_ocr.py                    # interactive: drag a box on screen
-    python poke_ocr.py --image shot.png   # parse an existing screenshot file
-    python poke_ocr.py --debug            # also print the OCR rows / column split
-    python poke_ocr.py --scale 4          # upscale factor for OCR (default 3)
+    python screenshot.py                    # interactive: drag a box on screen
+    python screenshot.py --image shot.png   # parse an existing screenshot file
+    python screenshot.py --debug            # also print the OCR rows / column split
+    python screenshot.py --scale 4          # upscale factor for OCR (default 3)
 
 Dependencies:
     pip install pillow pytesseract mss pyperclip

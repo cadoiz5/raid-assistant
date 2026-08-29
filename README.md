@@ -8,7 +8,7 @@ per-raid "strat" constraints (species / item / ability / stat bounds / moves).
 
 | File | What it does |
 | --- | --- |
-| `screenshot` | CLI: grab a screen region, OCR it, emit a PokePaste to the clipboard. Run `python screenshot`. Flags: `--image`, `--bbox x1,y1,x2,y2`, `--select-only`, `--scale`, `--debug`. |
+| `screenshot.py` | CLI: grab a screen region, OCR it, emit a PokePaste to the clipboard. Run `python screenshot.py`. Flags: `--image`, `--bbox x1,y1,x2,y2`, `--select-only`, `--scale`, `--debug`. |
 | `app.py` | Main GUI. Coverage grid of the 6 raids x positions P1-P4, scoped to a "character" (a PokeMMO account). Run `python app.py`. |
 | `scan_window.py` | Per-position scan window: scan 6 Pokemon, validate each against the loaded strat. |
 | `build_lists.py` | Regenerates `data/` (reference name lists + `species_stats.json`) from PokeMMO's dex dump (`../dump/*.json`). |

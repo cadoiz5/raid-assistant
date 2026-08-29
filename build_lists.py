@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-build_lists.py - regenerate the reference name lists that poke_ocr snaps to,
+build_lists.py - regenerate the reference name lists that screenshot.py snaps to,
 straight from PokeMMO's dex dump (../dump/*.json).
 
 Run this once, and again whenever the dump is refreshed:

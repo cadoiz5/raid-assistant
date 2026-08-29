@@ -29,7 +29,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SCRIPT = os.path.join(HERE, "screenshot")
+SCRIPT = os.path.join(HERE, "screenshot.py")
 STRATS = os.path.join(HERE, "strats")
 
 STATUS_GLYPH = {"none": "○", "scanned": "●", "valid": "✓", "invalid": "✗"}
