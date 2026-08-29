@@ -415,6 +415,16 @@ def _ev_changes(new_evs, scan):
                      for s in STATS if s in new_evs)
 
 
+def _need_note(required, scanned_norm):
+    """List the required moves the mon HAS, then ' -- need <the missing ones>'."""
+    have = [m for m in required if _norm(m) in scanned_norm]
+    miss = [m for m in required if _norm(m) not in scanned_norm]
+    txt = ", ".join(have)
+    if miss:
+        txt = (txt + " -- " if txt else "") + "need " + ", ".join(miss)
+    return txt, miss
+
+
 def load_scans(path):
     """saves/<char>/<raid>/<Pn>.txt -> {slot_num: block_text}."""
     scans = {}
@@ -535,12 +545,11 @@ def check_slot(slot, block):
     if not req_egg:
         c_egg = _chk("Egg moves", "na", "none")
     else:
-        miss = [m for m in req_egg if _norm(m) not in scanned_moves]
-        listed = ", ".join(req_egg)
-        c_egg = (_chk("Egg moves", "pass", listed) if not miss
+        note, miss = _need_note(req_egg, scanned_moves)
+        c_egg = (_chk("Egg moves", "pass", note) if not miss
                  else _chk("Egg moves", "missing", "missing information")
                  if not full_moveset
-                 else _chk("Egg moves", "fail", listed))
+                 else _chk("Egg moves", "fail", note))
 
     r["breed"] = [c_iv, c_nat, c_ha, c_egg]
 
@@ -581,15 +590,14 @@ def check_slot(slot, block):
         c_ab = _chk("Ability", "fail", f"{on_ab} -- need {want_ab}{tag}")
 
     need = [m for m in req_moves if _norm(m) not in egg]
-    on_moves = ", ".join(scan["moves"]) or "–"
     if not need:
         c_mv = _chk("Moveset", "na", "none required")
     else:
-        miss = [m for m in need if _norm(m) not in scanned_moves]
-        c_mv = (_chk("Moveset", "pass", on_moves) if not miss
+        note, miss = _need_note(need, scanned_moves)
+        c_mv = (_chk("Moveset", "pass", note) if not miss
                 else _chk("Moveset", "missing", "missing information")
                 if not full_moveset
-                else _chk("Moveset", "fail", f"{on_moves} -- need " + ", ".join(miss)))
+                else _chk("Moveset", "fail", note))
 
     if not slot["item"]:
         c_it = _chk("Item", "na", "not pinned")
