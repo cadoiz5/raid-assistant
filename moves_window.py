@@ -92,21 +92,19 @@ class MovesWindow:
 
         top = ttk.Frame(frame)
         top.pack(fill="x")
-        ttk.Label(top, text=f"{raid}   ·   move order",
-                  font=("TkDefaultFont", 10, "bold")).pack(side="left")
 
         self.view_var = tk.StringVar(
             value=app.prefs.get("moves_view") or "All positions")
         vb = ttk.Combobox(top, state="readonly", width=13, textvariable=self.view_var,
                           values=["All positions", *POSITIONS])
-        vb.pack(side="right")
+        vb.pack(side="left")
         vb.bind("<<ComboboxSelected>>", self._on_view)
 
         if len(self.strats) > 1:
             self.strat_var = tk.StringVar(value=self.strat)
             sb = ttk.Combobox(top, state="readonly", width=16,
                               textvariable=self.strat_var, values=self.strats)
-            sb.pack(side="right", padx=(0, 8))
+            sb.pack(side="right")
             sb.bind("<<ComboboxSelected>>", self._change_strat)
 
         self.body = ttk.Frame(frame)
