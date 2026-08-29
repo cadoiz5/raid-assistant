@@ -123,6 +123,7 @@ class MovesWindow:
         path = (os.path.join(STRATS, self.raid, self.strat + ".txt")
                 if self.strat else None)
         self.turns = parse_moves(path) if path else []
+        self.done = set()  # turn indices ticked off during the raid
         if self.turns:
             self.info.config(text=f"{len(self.turns)} turns   ·   strat: {self.strat}")
         else:
@@ -147,24 +148,43 @@ class MovesWindow:
         cols = (POSITIONS if self.view_var.get() == "All positions"
                 else [self.view_var.get()])
         bold = ("TkDefaultFont", 9, "bold")
+        self._rows = []  # per turn: [(label, normal_fg), ...]
 
         ttk.Label(self.table, text="", width=7).grid(row=0, column=0, sticky="w")
         for c, p in enumerate(cols, start=1):
             ttk.Label(self.table, text=p, font=bold, anchor="center").grid(
                 row=0, column=c, sticky="ew", padx=1, pady=(0, 3))
 
-        for r, turn in enumerate(self.turns, start=1):
-            ttk.Label(self.table, text=turn["turn"], anchor="nw").grid(
-                row=r, column=0, sticky="nw", padx=(0, 8), pady=3)
+        for i, turn in enumerate(self.turns):
+            paint = []
+            tl = ttk.Label(self.table, text=turn["turn"], anchor="nw")
+            tl.grid(row=i + 1, column=0, sticky="nw", padx=(0, 8), pady=3)
+            paint.append((tl, "#000000"))
             for c, p in enumerate(cols, start=1):
                 mon, mv = split_action(turn["actions"].get(p, ""))
                 cell = ttk.Frame(self.table, relief="solid", borderwidth=1,
-                                 padding=(6, 3))
-                ttk.Label(cell, text=mon or "–", font=bold).pack(anchor="w")
-                ttk.Label(cell, text=mv, foreground="#606060").pack(anchor="w")
-                cell.grid(row=r, column=c, sticky="ew", padx=1, pady=1)
+                                 padding=(6, 3), cursor="hand2")
+                nl = ttk.Label(cell, text=mon or "–", font=bold, cursor="hand2")
+                ml = ttk.Label(cell, text=mv, foreground="#606060", cursor="hand2")
+                nl.pack(anchor="w")
+                ml.pack(anchor="w")
+                cell.grid(row=i + 1, column=c, sticky="ew", padx=1, pady=1)
+                paint += [(nl, "#000000"), (ml, "#606060")]
+                for w in (cell, nl, ml):
+                    w.bind("<Button-1>", lambda e, n=i: self._toggle_row(n))
+            self._rows.append(paint)
+            self._paint_row(i)
 
         for c in range(1, len(cols) + 1):
             self.table.columnconfigure(c, weight=1, uniform="pos")
 
         self.win.geometry("")  # shrink-wrap to the visible columns
+
+    def _toggle_row(self, i):
+        self.done.symmetric_difference_update({i})
+        self._paint_row(i)
+
+    def _paint_row(self, i):
+        muted = i in self.done
+        for lbl, fg in self._rows[i]:
+            lbl.configure(foreground="#bcbcbc" if muted else fg)
