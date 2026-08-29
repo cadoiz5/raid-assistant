@@ -807,8 +807,11 @@ class ScanWindow:
         self.tree.delete(*self.tree.get_children())
         self._notes = {}
         slot = self._slot_by_num(num)
-        if slot is None or num not in self.scans:
+        if slot is None:
             self.banner.config(text="")
+            return
+        if num not in self.scans:
+            self._show_target(slot)
             return
         r = check_slot(slot, self.scans[num])
         if not r["species_ok"]:
@@ -837,6 +840,26 @@ class ScanWindow:
                     gid, "end", tags=(c["status"],), values=(short,),
                     text=f"  {STATUS_MARK[c['status']]} {c['label']}")
                 self._notes[iid] = f"{c['label']} — {note}" if note else c["label"]
+
+    def _show_target(self, slot):
+        """Not-scanned slot: show the nature / IV / EV spread to breed for."""
+        from breed_calc import recommend, fmt_ivs, fmt_evs  # avoids import cycle
+        rec = recommend(slot["species"], slot["bounds"])
+        if not rec:
+            self.banner.config(text="not scanned yet", foreground="#888")
+            return
+        self.banner.config(text="not scanned — breed for:", foreground="#888")
+        gid = self.tree.insert("", "end", open=True, tags=("group",),
+                               text="Target spread", values=("",))
+        rows = [("Nature", f"{rec['nature']}  ({rec['nature_effect']})"),
+                ("IVs", fmt_ivs(rec["ivs"])),
+                ("EVs", fmt_evs(rec["evs"]))]
+        for label, val in rows:
+            self.tree.insert(gid, "end", text=f"  {label}", values=(val,))
+        for n in rec["notes"]:
+            iid = self.tree.insert(gid, "end", tags=("fail",),
+                                   text="  ⚠", values=(n,))
+            self._notes[iid] = n
 
     def _tree_click(self, ev):
         iid = self.tree.identify_row(ev.y)
