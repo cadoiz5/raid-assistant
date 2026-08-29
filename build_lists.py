@@ -65,6 +65,15 @@ def main():
         json.dump(stats, fh, separators=(",", ":"), sort_keys=True)
     print(f"  {'species_stats.json':15} {len(stats):5} entries")
 
+    # evolution graph: {from_species: [{to, type, val, item}, ...]} - lets the
+    # validator tell an under-levelled pre-evo to evolve instead of "wrong mon".
+    evo = {m["name"]: [{"to": e["name"], "type": e["type"], "val": e.get("val"),
+                        "item": e.get("item_name")} for e in m["evolutions"]]
+           for m in monsters if m.get("evolutions")}
+    with open(os.path.join(DATA, "evolutions.json"), "w", encoding="utf-8") as fh:
+        json.dump(evo, fh, separators=(",", ":"), sort_keys=True)
+    print(f"  {'evolutions.json':15} {len(evo):5} entries")
+
 
 if __name__ == "__main__":
     print("building reference lists from", os.path.normpath(DUMP))

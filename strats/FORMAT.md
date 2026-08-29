@@ -54,3 +54,8 @@ Each entry is `<number><modifier> <STAT>`, where STAT is one of
 | `294+ Spe`     | 294 or more                            |
 | `226- Spe`     | 226 or less                            |
 | `180-226 Spe`  | between 180 and 226 (inclusive)        |
+
+Stat bounds are read at **level 100** — every raid mon must be level 100
+(checked automatically, no need to write it). If a scan is under 100 or is
+still a pre-evolution, its stats are projected to level 100 for the check and
+the report says to level up / evolve.

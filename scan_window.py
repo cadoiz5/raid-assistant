@@ -83,6 +83,44 @@ try:
 except OSError:
     NO_BREED = set()
 
+try:
+    with open(os.path.join(HERE, "data", "evolutions.json"), encoding="utf-8") as _fh:
+        EVOLUTIONS = json.load(_fh)  # {from: [{to, type, val, item}, ...]}
+except (OSError, ValueError):
+    EVOLUTIONS = {}
+
+
+def evo_path(frm, to):
+    """List of evolution steps from `frm` up to `to`, or None if `to` isn't a
+    later evolution of `frm`."""
+    want = _norm(to)
+    seen, queue = {_norm(frm)}, [(frm, [])]
+    while queue:
+        cur, path = queue.pop(0)
+        for step in EVOLUTIONS.get(cur, []):
+            if _norm(step["to"]) == want:
+                return path + [step]
+            if _norm(step["to"]) not in seen:
+                seen.add(_norm(step["to"]))
+                queue.append((step["to"], path + [step]))
+    return None
+
+
+def _evo_how(step):
+    """Short 'how to evolve' note for one step."""
+    if step.get("item"):
+        return f"needs {step['item']}"
+    t = step.get("type", "")
+    if t.startswith("TRADE"):
+        return "by trading"
+    if t.startswith("HAPPINESS"):
+        return "raise friendship"
+    if t.startswith("LEVEL") and isinstance(step.get("val"), int) and 1 <= step["val"] <= 100:
+        return f"by Lv {step['val']}"
+    if t.startswith("LEVEL"):
+        return "by levelling"
+    return "by " + t.lower().replace("_", " ")
+
 
 # ---------------- strat files ----------------
 def strat_names(raid):
@@ -185,11 +223,14 @@ def parse_scan(block):
     name_part, _, item = head.partition("@")
     d = {"species": re.sub(r"\((?:M|F)\)", "", name_part).strip(),
          "item": item.strip() or None, "ability": None, "nature": None,
-         "stats": {}, "evs": {}, "ivs": {}, "moves": []}
+         "level": None, "stats": {}, "evs": {}, "ivs": {}, "moves": []}
     for ln in lines[1:]:
         low = ln.lower()
         if low.startswith("ability:"):
             d["ability"] = ln.split(":", 1)[1].strip()
+        elif low.startswith("level:"):
+            m = re.search(r"\d+", ln)
+            d["level"] = int(m.group()) if m else None
         elif low.startswith("stats:"):
             d["stats"] = _stat_line(ln.split(":", 1)[1])
         elif low.startswith("evs:"):
@@ -217,6 +258,19 @@ def _mult_fn(nature):
         return None
     plus, minus = nat
     return lambda i: None if i == 0 else 1.1 if i == plus else 0.9 if i == minus else 1.0
+
+
+def _project_stats(species, scan):
+    """The level-100 stats `species` would have with this scan's IVs/EVs/nature -
+    used when the scan is under level 100 or still a pre-evolution. {} if the
+    base stats or nature aren't known."""
+    base = BASE_STATS.get(species)
+    mult = _mult_fn(scan.get("nature"))
+    if not base or mult is None:
+        return {}
+    ivs, evs = scan.get("ivs", {}), scan.get("evs", {})
+    return {s: _final_stat(base[i], ivs.get(s, 31), evs.get(s, 0), mult(i))
+            for i, s in enumerate(STATS)}
 
 
 def _ev_window(base, iv, mult, lo, hi):
@@ -440,25 +494,52 @@ def load_scans(path):
 def validate(slot, block):
     """Return a list of failure strings ([] == valid)."""
     scan = parse_scan(block)
-    # wrong species: nothing else matters until it's the right Pokemon
-    if _norm(scan["species"]) != _norm(slot["species"]):
-        return [f"species: want {slot['species']}, got {scan['species'] or '?'}"]
+    want = slot["species"]
+
+    # species: exact match is fine; a pre-evolution just needs to evolve;
+    # anything else is the wrong Pokemon and nothing else is worth checking.
+    steps = None
+    if _norm(scan["species"]) != _norm(want):
+        steps = evo_path(scan["species"], want) if scan["species"] else None
+        if not steps:
+            return [f"species: want {want}, got {scan['species'] or '?'}"]
+
     fails = []
+    if steps:
+        chain = " → ".join([scan["species"]] + [s["to"] for s in steps])
+        fails.append(f"→ evolve {chain} ({', then '.join(_evo_how(s) for s in steps)})")
+
+    lvl = scan.get("level")
+    if lvl is None:
+        fails.append("level: not scanned")
+    elif lvl != 100:
+        fails.append(f"level {lvl}, need 100 — level it up")
+
     if slot["item"] and _norm(scan["item"]) != _norm(slot["item"]):
         fails.append(f"item: want {slot['item']}, got {scan['item'] or 'none'}")
     if slot["ability"] and slot["ability"].strip().lower() != "any":
         if _norm(scan["ability"]) != _norm(slot["ability"]):
             fails.append(f"ability: want {slot['ability']}, got {scan['ability'] or '?'}")
-    bad_stat = False
-    for stat, (lo, hi) in slot["bounds"].items():
-        val = scan["stats"].get(stat)
-        if val is None:
-            fails.append(f"{stat}: not scanned")
-        elif not lo <= val <= hi:
-            fails.append(f"{stat} {val}, need {_fmt_bound(lo, hi)}")
-            bad_stat = True
-    if bad_stat:
-        _suggest_fix(fails, slot, scan)
+
+    # under level 100 or still a pre-evo -> the card's stats aren't the final
+    # ones; judge the projected level-100 stats of the target species instead.
+    projected = steps is not None or (lvl is not None and lvl != 100)
+    eff = _project_stats(want, scan) if projected else scan["stats"]
+    if projected and not eff:
+        fails.append("stats: can't project to Lv100 (nature?)")
+    else:
+        bad_stat = False
+        for stat, (lo, hi) in slot["bounds"].items():
+            val = eff.get(stat)
+            if val is None:
+                fails.append(f"{stat}: not scanned")
+            elif not lo <= val <= hi:
+                fails.append(f"{stat} {val}{' at Lv100' if projected else ''}, "
+                             f"need {_fmt_bound(lo, hi)}")
+                bad_stat = True
+        if bad_stat:
+            _suggest_fix(fails, slot, scan)
+
     scanned_moves = {_norm(m) for m in scan["moves"]}
     for mv in slot["moves"]:
         if _norm(mv) not in scanned_moves:
