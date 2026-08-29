@@ -5,7 +5,8 @@ moves_window.py - the in-raid move order.
 A strat file may carry a "[Moves]" section: one "Turn N" block per turn, and
 under it up to four "P<n> - ..." lines. A line is either a fixed "Mon Move",
 or just "Mon" followed by "* <Ad> <Move>" lines - one per possible spawn ad -
-when that turn's move depends on which ad appeared alongside the boss.
+when that turn's move depends on which ad appeared alongside the boss. A
+trailing "Ad" / "Boss" / "Self" is the move's target (default: the boss).
 
 This window shows the table (mon name over the move). A checkbox on each
 P1..P4 header greys that column; clicking a turn's row greys it (turn done);
@@ -50,9 +51,15 @@ def split_action(text):
     return (parts[0], parts[1]) if len(parts) == 2 else (text, "")
 
 
+def _split_target(text):
+    """'Captivate Ad' -> ('Captivate', 'Ad'); 'Water Sport' -> ('Water Sport', '')."""
+    m = re.match(r"(.*?)\s+(ad|boss|self)$", text.strip(), re.I)
+    return (m.group(1).strip(), m.group(2).capitalize()) if m else (text.strip(), "")
+
+
 def parse_moves(path):
     """-> [{'turn': 'Turn 1', 'actions': {'P1': act, ...}}, ...] from the file's
-    [Moves] section. act = {'mon', 'move', 'by_ad': {ad: move}}."""
+    [Moves] section. act = {'mon', 'move', 'target', 'by_ad': {ad: (move, target)}}."""
     try:
         with open(path, encoding="utf-8") as fh:
             lines = fh.read().splitlines()
@@ -77,14 +84,17 @@ def parse_moves(path):
         elif cur is None:
             continue
         elif s.startswith("*"):
-            m = re.match(r"\*\s*([A-Za-z]+)[:\s]+(.+?)(?:\s+ad)?$", s, re.I)
+            m = re.match(r"\*\s*([A-Za-z]+)[:\s]+(.+)$", s)
             if m and last:
-                cur["actions"][last]["by_ad"][m.group(1).title()] = m.group(2).strip()
+                mv, tgt = _split_target(m.group(2))
+                cur["actions"][last]["by_ad"][m.group(1).title()] = (mv, tgt)
         else:
             m = re.match(r"(P[1-4])\s*[-–:]\s*(.*)$", s)
             if m:
-                mon, mv = split_action(m.group(2).strip())
-                cur["actions"][m.group(1)] = {"mon": mon, "move": mv, "by_ad": {}}
+                rest, tgt = _split_target(m.group(2))
+                mon, mv = split_action(rest)
+                cur["actions"][m.group(1)] = {"mon": mon, "move": mv,
+                                              "target": tgt, "by_ad": {}}
                 last = m.group(1)
     return turns
 
@@ -188,11 +198,15 @@ class MovesWindow:
 
     # ---- table ----
     def _cell_text(self, act):
+        """-> (mon, move-line) for the selected ad. The move line carries the
+        target ('Captivate  → Ad') when it isn't the default boss."""
         if act is None:
             return "", ""
-        mv = act["by_ad"].get(self.ad_var.get(), act["move"]) if act["by_ad"] \
-            else act["move"]
-        return act["mon"], mv
+        if act["by_ad"]:
+            mv, tgt = act["by_ad"].get(self.ad_var.get(), ("", ""))
+        else:
+            mv, tgt = act["move"], act["target"]
+        return act["mon"], f"{mv}  → {tgt}" if tgt else mv
 
     def _build_table(self):
         if self.table is not None:
