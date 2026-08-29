@@ -14,7 +14,7 @@ import re
 import tkinter as tk
 from tkinter import ttk
 
-from scan_window import HERE, STRATS, center_over, strat_names
+from scan_window import HERE, STRATS, center_over, evaluate_position, strat_names
 
 POSITIONS = ["P1", "P2", "P3", "P4"]
 
@@ -91,7 +91,15 @@ class MovesWindow:
         frame = ttk.Frame(win, padding=10)
         frame.pack(fill="both", expand=True)
 
-        checked = set(app.prefs.get("moves_cols") or POSITIONS)
+        # default: the positions this character has a valid team for; a manual
+        # tick set (per raid) overrides it once the player touches a checkbox.
+        saved = app.prefs.get("moves_cols")
+        saved = saved.get(raid) if isinstance(saved, dict) else None
+        if saved is None:
+            valid = [p for p in POSITIONS
+                     if evaluate_position(raid, p, app._paste_path(raid, p)) == "valid"]
+            saved = valid or POSITIONS
+        checked = set(saved)
         self.col_vars = {p: tk.BooleanVar(value=p in checked) for p in POSITIONS}
 
         if len(self.strats) > 1:
@@ -131,8 +139,10 @@ class MovesWindow:
         self._reload()
 
     def _on_check(self):
-        self.app.prefs.set("moves_cols",
-                           [p for p in POSITIONS if self.col_vars[p].get()])
+        cols = self.app.prefs.get("moves_cols")
+        cols = dict(cols) if isinstance(cols, dict) else {}
+        cols[self.raid] = [p for p in POSITIONS if self.col_vars[p].get()]
+        self.app.prefs.set("moves_cols", cols)
         self._paint()
 
     # ---- table ----
