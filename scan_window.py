@@ -209,10 +209,11 @@ def parse_strat(path):
             s = line.rstrip("\n")
             if s.strip().startswith("#"):
                 continue
-            header = re.match(r"\[(P[1-4])\]\s*$", s.strip())
+            header = re.match(r"\[([^\]]+)\]\s*$", s.strip())
             if header:
                 flush()
-                cur = header.group(1)
+                sec = header.group(1)
+                cur = sec if re.fullmatch(r"P[1-4]", sec) else None
             elif not s.strip():
                 flush()
             else:

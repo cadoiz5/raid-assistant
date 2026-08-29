@@ -33,3 +33,17 @@ Ability: Cloud Nine
 [P4]
 
 # TODO
+
+[Moves]
+
+Turn 1
+P1 - Golduck Water Sport
+P2 - Swanna Lucky Chant
+P3 - Infernape Captivate
+P4 - Whimsicott Switcheroo
+
+Turn 2
+P1 - Golduck Knock Off
+P2 - Flygon Earth Power
+P3 - Swampert Scary Face
+P4 - Flygon Earth Power

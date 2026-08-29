@@ -30,6 +30,7 @@ from tkinter import ttk, simpledialog, messagebox
 
 from prefs import Prefs
 from scan_window import ScanWindow, evaluate_position
+from moves_window import MovesWindow
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SAVES = os.path.join(HERE, "saves")
@@ -164,7 +165,7 @@ class App:
                              cursor="hand2")
             name.grid(row=r, column=0, padx=2, pady=2, sticky="w")
             name.bind("<Button-1>", lambda e, ra=raid: self.open_raid(ra))
-            Tooltip(name, "Raid strategy")
+            Tooltip(name, "Move order")
             self.table.rowconfigure(r, weight=1)
             for c, pos in enumerate(POSITIONS, start=1):
                 btn = ttk.Button(self.table, takefocus=False,
@@ -220,9 +221,7 @@ class App:
         ScanWindow(self, raid, position)
 
     def open_raid(self, raid):
-        # clicking a raid name -> the in-raid strategy / moves table (TODO)
-        messagebox.showinfo(f"{raid} strategy",
-                            "The moves table for this raid isn't built yet.")
+        MovesWindow(self, raid)
 
     # ---------------- Character menu ----------------
     def character_new(self):

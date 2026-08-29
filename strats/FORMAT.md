@@ -95,5 +95,27 @@ The IVs and Nature checks pass automatically whenever the scanned final
 stats already sit inside the bounds — they only flag a problem when the
 stats are out of range and re-breeding is the reason.
 
+## `[Moves]` section — the in-raid move order
+
+Optional. Add a `[Moves]` section (anywhere in the file) with one `Turn N`
+block per turn, and under it up to four `P<n> - <what to click>` lines:
+
+```
+[Moves]
+
+Turn 1
+P1 - Golduck Water Sport
+P2 - Swanna Lucky Chant
+P3 - Infernape Captivate
+P4 - Whimsicott Switcheroo
+
+Turn 2
+P1 - Golduck Knock Off
+...
+```
+
+Clicking a raid's name in the main table opens this as a turn × position
+table, with a toggle to show every position or just one.
+
 A check reads `–` when the block doesn't pin anything for it, and `⋯` when an
 earlier breed check has to be fixed first.
