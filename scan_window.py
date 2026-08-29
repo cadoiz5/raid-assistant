@@ -364,30 +364,6 @@ def _iv_window(base, mult, lo, hi):
     return (feas[0], feas[-1]) if feas else None
 
 
-def suggest_ivs(species, scan, bounds):
-    """For a mon that can re-roll IVs (see NO_BREED): the IV range each
-    constrained stat needs.
-      -> ('impossible', stat)      even a perfect IV can't reach the bound
-         ('ok', {stat: (lo, hi)})  IV windows for the stats that must change
-         None                      not enough data
-    IVs are independent per stat, so each window stands on its own.
-    """
-    base = BASE_STATS.get(species)
-    mult = _mult_fn(scan.get("nature"))
-    if not base or mult is None:
-        return None
-    ivs = scan.get("ivs", {})
-    out = {}
-    for stat, (lo, hi) in bounds.items():
-        i = STATS.index(stat)
-        w = _iv_window(base[i], mult(i), lo, hi)
-        if w is None:
-            return ("impossible", stat)
-        if not w[0] <= ivs.get(stat, 31) <= w[1]:
-            out[stat] = w
-    return ("ok", out)
-
-
 def _min_total_ev(base, mult, bounds):
     """Least total EV to meet every bound, assuming IVs can be re-rolled freely.
     None if a bound is unreachable at all or the total blows the 510 cap."""
@@ -426,80 +402,17 @@ def suggest_nature(species, bounds, exclude=None):
     return ranked[0][2].title() if ranked else None
 
 
-def _iv_targets(species, nature, bounds):
-    """{stat: (lo, hi)} IV window for every constrained stat under `nature`,
-    skipping stats where any IV works. {} if data is missing."""
-    base = BASE_STATS.get(species)
-    mult = _mult_fn(nature)
-    if not base or mult is None:
-        return {}
-    out = {}
-    for stat, (lo, hi) in bounds.items():
-        i = STATS.index(stat)
-        w = _iv_window(base[i], mult(i), lo, hi)
-        if w and w != (0, 31):
-            out[stat] = w
-    return out
+def _plus_stat(nature_name):
+    """The stat a nature boosts (e.g. 'Spe'); None for a neutral nature / unknown."""
+    n = NATURES.get((nature_name or "").lower())
+    return STATS[n[0]] if n and n[0] is not None else None
 
 
-def _ev_line(new_evs, scan):
-    parts = []
-    for s in STATS:
-        if s in new_evs:
-            d = new_evs[s] - scan.get("evs", {}).get(s, 0)
-            parts.append(f"{s} {new_evs[s]} ({d:+d})")
-    return "→ EVs: " + ", ".join(parts)
-
-
-def _suggest_fix(fails, slot, scan):
-    """Append '→ Nature / IVs / EVs' hints for a stat-bound failure."""
-    species, bounds = slot["species"], slot["bounds"]
-    sug = suggest_evs(species, scan, bounds)
-    if sug and sug[0] == "ok" and sug[1]:
-        fails.append(_ev_line(sug[1], scan))
-        return
-    if not sug or sug[0] != "breed":
-        return
-    if _norm(species) not in NO_BREED:
-        fails.append("→ can't fix with EVs — wrong breed")
-        return
-
-    # A legendary can re-roll its nature and IVs - work out a target that fits.
-    base = BASE_STATS.get(species)
-    cur_mult = _mult_fn(scan.get("nature"))
-    cur_ok = bool(base) and cur_mult is not None \
-        and _min_total_ev(base, cur_mult, bounds) is not None
-
-    if cur_ok:
-        # keep the nature; the IVs (and maybe some EVs) are what's off
-        ivf = suggest_ivs(species, scan, bounds)
-        if ivf and ivf[0] == "ok" and ivf[1]:
-            fails.append("→ IVs: " + ", ".join(
-                f"{s} {_fmt_bound(*ivf[1][s])}" for s in STATS if s in ivf[1]))
-            fixed = dict(scan, ivs=dict(scan.get("ivs", {})))
-            for s, (lo, hi) in ivf[1].items():
-                fixed["ivs"][s] = min(max(fixed["ivs"].get(s, 31), lo), hi)
-            ev2 = suggest_evs(species, fixed, bounds)
-        else:
-            ev2 = suggest_evs(species, scan, bounds)
-        if ev2 and ev2[0] == "ok" and ev2[1]:
-            fails.append(_ev_line(ev2[1], scan))
-        return
-
-    nature = suggest_nature(species, bounds, exclude=scan.get("nature"))
-    if not nature:
-        fails.append("→ bounds can't be met even with a different nature")
-        return
-    fails.append(f"→ Nature: {nature}")
-    tgt = _iv_targets(species, nature.lower(), bounds)
-    if tgt:
-        fails.append("→ IVs: " + ", ".join(
-            f"{s} {_fmt_bound(*tgt[s])}" for s in STATS if s in tgt))
-    ivs = dict(scan.get("ivs", {}))
-    ivs.update({s: hi for s, (lo, hi) in tgt.items()})
-    ev2 = suggest_evs(species, dict(scan, nature=nature.lower(), ivs=ivs), bounds)
-    if ev2 and ev2[0] == "ok" and ev2[1]:
-        fails.append(_ev_line(ev2[1], scan))
+def _ev_changes(new_evs, scan):
+    """'HP 252 (+4), Spe 96 (+2)' - the EVs to set and the delta from the scan."""
+    cur = scan.get("evs", {})
+    return ", ".join(f"{s} {new_evs[s]} ({new_evs[s] - cur.get(s, 0):+d})"
+                     for s in STATS if s in new_evs)
 
 
 def load_scans(path):
@@ -554,6 +467,9 @@ def check_slot(slot, block):
         eff.get(s) is not None and lo <= eff[s] <= hi
         for s, (lo, hi) in bounds.items())
 
+    ivs_of = lambda: " / ".join(f"{scan.get('ivs', {}).get(s, 31)} {s}"
+                                for s in STATS if s in bounds)
+
     # ---------- BREED ----------
     # Nature first - the IV and EV checks lean on it.
     nature = scan.get("nature")
@@ -563,21 +479,22 @@ def check_slot(slot, block):
     elif not nature:
         c_nat = _chk("Nature", "missing", "missing information")
     elif stats_pass:
-        c_nat, nat_ok = _chk("Nature", "pass", f"{nature} — stats in range"), True
+        c_nat, nat_ok = _chk("Nature", "pass", nature), True
     elif not base or mult is None:
         c_nat = _chk("Nature", "na", "nature not recognised")
     elif _min_total_ev(base, mult, bounds) is not None:
-        c_nat, nat_ok = _chk("Nature", "pass", f"{nature} works"), True
+        c_nat, nat_ok = _chk("Nature", "pass", nature), True
     else:
         alt = suggest_nature(want, bounds, exclude=nature)
-        c_nat, nat_ok = _chk("Nature", "fail",
-                             f"{nature} can't reach the bounds"
-                             + (f" — {reroll} for {alt}" if alt else "")), False
+        plus = _plus_stat(alt)
+        need_nat = (f"+{plus} Nature" if plus else
+                    f"{alt} Nature" if alt else "a different nature")
+        c_nat, nat_ok = _chk("Nature", "fail", f"{nature}, need {need_nat}"), False
 
     if not bounds:
         c_iv = _chk("IVs", "na", "no stat bounds")
     elif stats_pass:
-        c_iv = _chk("IVs", "pass", "stats already meet the bounds")
+        c_iv = _chk("IVs", "pass", ivs_of())
     elif not nature:
         c_iv = _chk("IVs", "blocked", "needs the nature")
     elif not base or mult is None:
@@ -591,7 +508,7 @@ def check_slot(slot, block):
             if _ev_window(base[i], ivs.get(stat, 31), mult(i), lo, hi) is None:
                 bad[stat] = _iv_window(base[i], mult(i), lo, hi)
         if not bad:
-            c_iv = _chk("IVs", "pass", "good enough for the bounds")
+            c_iv = _chk("IVs", "pass", ivs_of())
         else:
             parts = [f"{s} {_fmt_bound(*w)}" if w else f"{s} impossible"
                      for s, w in bad.items()]
@@ -600,31 +517,30 @@ def check_slot(slot, block):
     want_ab = (slot["ability"] or "").strip()
     pinned_ab = want_ab and want_ab.lower() != "any"
     ha = HIDDEN_ABILITY.get(_norm(want))
-    if not pinned_ab:
-        c_ha = _chk("Hidden Ability", "na", "ability not pinned")
-    elif not ha or _norm(want_ab) != _norm(ha):
-        c_ha = _chk("Hidden Ability", "na", f"{want_ab} is a normal ability")
-    elif _norm(scan.get("ability")) == _norm(want_ab):
-        c_ha = _chk("Hidden Ability", "pass", "already on the hidden ability")
-    elif scan.get("has_ha"):
-        c_ha = _chk("Hidden Ability", "pass", "HA marker on the scan")
-    elif not scan.get("ability"):
+    on_ab = scan.get("ability")
+    needs_ha = bool(pinned_ab and ha and _norm(want_ab) == _norm(ha))
+    has_ha = bool(scan.get("has_ha")) or bool(ha and _norm(on_ab) == _norm(ha))
+    if needs_ha and not on_ab and not scan.get("has_ha"):
         c_ha = _chk("Hidden Ability", "missing", "missing information")
+    elif needs_ha:
+        c_ha = _chk("Hidden Ability", "pass" if has_ha else "fail",
+                    "Yes" if has_ha else "No")
     else:
-        c_ha = _chk("Hidden Ability", "fail",
-                    f"no HA access shown — breed {want} from an HA parent")
+        c_ha = _chk("Hidden Ability", "na", "Yes" if has_ha else "No")
 
     egg = EGG_MOVES.get(_norm(want), set())
     scanned_moves = {_norm(m) for m in scan["moves"]}
     full_moveset = len(scan["moves"]) >= 4  # else the scan dropped a move row
     req_egg = [m for m in req_moves if _norm(m) in egg]
     if not req_egg:
-        c_egg = _chk("Egg moves", "na", "none required")
+        c_egg = _chk("Egg moves", "na", "none")
     else:
         miss = [m for m in req_egg if _norm(m) not in scanned_moves]
-        c_egg = (_chk("Egg moves", "pass", ", ".join(req_egg)) if not miss
-                 else _chk("Egg moves", "missing", "missing information") if not full_moveset
-                 else _chk("Egg moves", "fail", "breed in: " + ", ".join(miss)))
+        listed = ", ".join(req_egg)
+        c_egg = (_chk("Egg moves", "pass", listed) if not miss
+                 else _chk("Egg moves", "missing", "missing information")
+                 if not full_moveset
+                 else _chk("Egg moves", "fail", listed))
 
     r["breed"] = [c_iv, c_nat, c_ha, c_egg]
 
@@ -640,49 +556,40 @@ def check_slot(slot, block):
     if not bounds:
         c_ev = _chk("EVs", "na", "no stat bounds")
     elif stats_pass:
-        c_ev = _chk("EVs", "pass", "stats in range" + (" at Lv100" if projected else ""))
+        c_ev = _chk("EVs", "pass", "in range" + (" at Lv100" if projected else ""))
     elif c_nat["status"] in ("fail", "missing") or c_iv["status"] in ("fail", "missing"):
         c_ev = _chk("EVs", "blocked", "fix breed first")
     elif not eff:
         c_ev = _chk("EVs", "missing", "missing information")
+    elif all(eff.get(s) is not None and lo <= eff[s] <= hi
+             for s, (lo, hi) in bounds.items()):
+        c_ev = _chk("EVs", "pass", "in range" + (" at Lv100" if projected else ""))
     else:
-        bad = {s: eff.get(s) for s, (lo, hi) in bounds.items()
-               if eff.get(s) is None or not lo <= eff[s] <= hi}
-        if not bad:
-            c_ev = _chk("EVs", "pass", "stats in range" + (" at Lv100" if projected else ""))
-        else:
-            tips = []
-            _suggest_fix(tips, slot, scan)
-            shown = ", ".join(f"{s} {v if v is not None else '?'}" for s, v in bad.items())
-            c_ev = _chk("EVs", "fail", "  ".join([shown, *tips]))
+        sug = suggest_evs(want, scan, bounds)
+        c_ev = _chk("EVs", "fail",
+                    _ev_changes(sug[1], scan) if sug and sug[0] == "ok" and sug[1]
+                    else "no EV spread reaches the bounds")
 
     if not pinned_ab:
         c_ab = _chk("Ability", "na", "not pinned")
-    elif not scan.get("ability"):
+    elif not on_ab:
         c_ab = _chk("Ability", "missing", "missing information")
-    elif _norm(scan.get("ability")) == _norm(want_ab):
+    elif _norm(on_ab) == _norm(want_ab):
         c_ab = _chk("Ability", "pass", want_ab)
     else:
-        abils = SPECIES_ABILITIES.get(_norm(want), [])
-        on = scan.get("ability") or "?"
-        if abils and _norm(want_ab) not in {_norm(a) for a in abils}:
-            note = f"{want} can't have {want_ab}"
-        elif ha and _norm(want_ab) == _norm(ha):
-            lack = "" if (scan.get("has_ha") or _norm(on) == _norm(ha)) \
-                else " (unlock HA access first)"
-            note = f"on {on} — Ability Pill to {want_ab}{lack}"
-        else:
-            note = f"on {on} — Ability Capsule to {want_ab}"
-        c_ab = _chk("Ability", "fail", note)
+        tag = " (HA)" if (ha and _norm(want_ab) == _norm(ha)) else ""
+        c_ab = _chk("Ability", "fail", f"{on_ab} -- need {want_ab}{tag}")
 
     need = [m for m in req_moves if _norm(m) not in egg]
+    on_moves = ", ".join(scan["moves"]) or "–"
     if not need:
         c_mv = _chk("Moveset", "na", "none required")
     else:
         miss = [m for m in need if _norm(m) not in scanned_moves]
-        c_mv = (_chk("Moveset", "pass", ", ".join(need)) if not miss
-                else _chk("Moveset", "missing", "missing information") if not full_moveset
-                else _chk("Moveset", "fail", "teach: " + ", ".join(miss)))
+        c_mv = (_chk("Moveset", "pass", on_moves) if not miss
+                else _chk("Moveset", "missing", "missing information")
+                if not full_moveset
+                else _chk("Moveset", "fail", f"{on_moves} -- need " + ", ".join(miss)))
 
     if not slot["item"]:
         c_it = _chk("Item", "na", "not pinned")
@@ -691,8 +598,8 @@ def check_slot(slot, block):
     elif _norm(scan.get("item")) in {_norm(i) for i in slot["item"]}:
         c_it = _chk("Item", "pass", scan.get("item") or slot["item"][0])
     else:
-        c_it = _chk("Item", "fail", f"holding {scan['item']} — give "
-                    + " or ".join(slot["item"]))
+        c_it = _chk("Item", "fail",
+                    f"{scan['item']} -- need " + " or ".join(slot["item"]))
 
     r["training"] = [c_lv, c_ev, c_ab, c_mv, c_it]
     return r
