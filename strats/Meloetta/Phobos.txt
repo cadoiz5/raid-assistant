@@ -1,0 +1,149 @@
+[P1]
+
+1 - Raichu @ Rowap Berry
+Ability: Lightning Rod
+324 HP / 237 SpD / 280+ Spe
+- Lucky Chant
+
+2 - Heracross @ Choice Band / Bug Gem
+Ability: Any 
+349 Atk / 280 Spe
+- Megahorn
+
+3 - Suicune @ Covert Mantle
+Ability: Any
+342 HP / 255 SpD / 282 Spe
+- Snarl
+- Quash
+
+4 - Crawdaunt @ Iron Ball
+Ability: Adaptability
+372 Atk / 103 Spe
+- Fling 
+
+5 - Slowbro @ Rocky Helmet 
+Ability: Oblivious 
+394 HP / 350 Def / 234+ SpA / 185-190 SpD / 65-69 Spe
+- Psych Up
+- Psychic
+- Iron Defense 
+- Slack Off
+
+6 - Conkeldurr @ Life Orb
+Ability: Any
+416 Atk / 85 Spe
+- Close Combat
+
+
+
+
+[P2]
+
+1 - Mr. Mime @ Choice Scarf 
+Ability: Soundproof
+247 HP / 276 SpD / 216 Spe
+- Trick
+
+2 - Krookodile @ Choice Band 
+Ability: Intimidate
+366 Atk / 283 Spe
+- Assurance 
+
+3 - Arcanine @ Rowap Berry 
+Ability: Any
+319 HP / 194 SpD / 280 Spe
+- Snarl 
+
+4 - Escavalier @ Focus Sash
+Ability: Swarm
+405 Atk / 280 SpD / 52 Spe
+- Megahorn
+- Bug Bite
+
+5 - Dusclops @ Flame Orb
+Ability: Pressure 
+232 HP / 293 Def / 86- Spe
+- Fling 
+
+6 - Slowbro @ Rocky Helmet 
+Ability: Own Tempo 
+394 HP / 350 Def / 234+ SpA / 194+ SpD / 58-64 Spe
+
+
+
+
+[P3]
+
+1 - Krookodile @ Poison Barb
+Ability: Intimidate 
+366 Atk / 283 Spe 
+- Fling 
+
+2 - Scolipede @ Choice Band 
+Ability: Any
+270-275 HP / 328 Atk / 183-188 SpD / 284 Spe
+- Megahorn
+
+3 - Volcarona @ Choice Specs 
+Ability: Flame Body
+311 HP / 405 SpA / 261+ SpD / 281 Spe
+- Bug Buzz
+
+4 - Crawdaunt @ Iron Ball
+Ability: Adaptability
+372 Atk / 110-125 Spe
+- Fling 
+
+5 - Reuniclus @ Rocky Helmet 
+Ability: Magic Guard 
+424 HP / 257 Def / 217 SpD / 58-65 Spe 
+- Reflect
+- Safeguard 
+
+6 - Slowbro @ Kasib Berry 
+Ability: Own Tempo 
+394 HP / 350 Def / 234+ SpA / 185-190 SpD / 70-73 Spe
+- Trick Room
+- Psych Up
+- Focus Blast 
+- Psychic
+
+
+
+
+[P4] 
+
+1 - Jirachi @ Covert Mantle
+Ability: Any
+341 HP / 292 SpD / 285+ Spe
+- Gravity
+- Safeguard
+- Metal Sound
+
+2 - Honchkrow @ Life Orb 
+Ability: Super Luck
+339 HP / 383 Atk / 140 Def / 149+ SpD / 231 Spe 
+- Assurance 
+
+3 - Escavalier @ Focus Sash
+Ability: Swarm 
+265 HP / 405 Atk / 230 SpD / 89-99 Spe
+- Megahorn
+
+4 - Musharna @ Jaboca Berry
+Ability: Synchronize 
+436 HP / 295 Def / 226 SpD / 56-63 Spe
+- Lucky Chant
+- Gravity 
+
+5 - Reuniclus @ Rocky Helmet 
+Ability: Overcoat
+424 HP / 273 Def / 206 SpD / 58 Spe
+- Charm
+
+6 - Slowbro @ Iapapa Berry
+Ability: Own Tempo
+391 HP / 350 Def / 234+ SpA / 200 SpD / 74-87 Spe 
+- Psych Up 
+- Psychic
+- Focus Blast

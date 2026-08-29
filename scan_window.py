@@ -33,7 +33,7 @@ SCRIPT = os.path.join(HERE, "screenshot.py")
 STRATS = os.path.join(HERE, "strats")
 
 STATUS_GLYPH = {"none": "○", "scanned": "●", "valid": "✓", "invalid": "✗"}
-STATUS_MARK = {"pass": "✓", "fail": "✗", "na": "–", "blocked": "⋯"}
+STATUS_MARK = {"pass": "✓", "fail": "✗", "na": "–", "blocked": "⋯", "missing": "?"}
 STATS = ["HP", "Atk", "Def", "SpA", "SpD", "Spe"]
 INF = float("inf")
 EV_CAP = 510
@@ -522,7 +522,8 @@ def check_slot(slot, block):
         {species_ok, species_msg, evolve, level:(lvl, ok),
          breed:   [IVs, Nature, Hidden Ability, Egg moves],
          training:[EVs, Ability, Moveset, Item]}
-    each check = {label, status: pass|fail|na|blocked, note}."""
+    each check = {label, status: pass|fail|na|blocked|missing, note}.
+    'missing' (note "missing information") = the scan didn't capture that field."""
     scan = parse_scan(block)
     want = slot["species"]
     bounds, req_moves = slot["bounds"], slot["moves"]
@@ -554,27 +555,32 @@ def check_slot(slot, block):
 
     # ---------- BREED ----------
     # Nature first - the IV and EV checks lean on it.
+    nature = scan.get("nature")
     nat_ok = None
     if not bounds:
         c_nat = _chk("Nature", "na", "no stat bounds")
+    elif not nature:
+        c_nat = _chk("Nature", "missing", "missing information")
     elif stats_pass:
-        c_nat, nat_ok = _chk("Nature", "pass", f"{scan['nature']} — stats in range"), True
+        c_nat, nat_ok = _chk("Nature", "pass", f"{nature} — stats in range"), True
     elif not base or mult is None:
-        c_nat = _chk("Nature", "na", "nature not read")
+        c_nat = _chk("Nature", "na", "nature not recognised")
     elif _min_total_ev(base, mult, bounds) is not None:
-        c_nat, nat_ok = _chk("Nature", "pass", f"{scan['nature']} works"), True
+        c_nat, nat_ok = _chk("Nature", "pass", f"{nature} works"), True
     else:
-        alt = suggest_nature(want, bounds, exclude=scan.get("nature"))
+        alt = suggest_nature(want, bounds, exclude=nature)
         c_nat, nat_ok = _chk("Nature", "fail",
-                             f"{scan['nature'] or '?'} can't reach the bounds"
+                             f"{nature} can't reach the bounds"
                              + (f" — {reroll} for {alt}" if alt else "")), False
 
     if not bounds:
         c_iv = _chk("IVs", "na", "no stat bounds")
     elif stats_pass:
         c_iv = _chk("IVs", "pass", "stats already meet the bounds")
+    elif not nature:
+        c_iv = _chk("IVs", "blocked", "needs the nature")
     elif not base or mult is None:
-        c_iv = _chk("IVs", "na", "IVs / nature not read")
+        c_iv = _chk("IVs", "na", "nature not recognised")
     elif nat_ok is False:
         c_iv = _chk("IVs", "blocked", "fix the nature first")
     else:
@@ -601,18 +607,22 @@ def check_slot(slot, block):
         c_ha = _chk("Hidden Ability", "pass", "already on the hidden ability")
     elif scan.get("has_ha"):
         c_ha = _chk("Hidden Ability", "pass", "HA marker on the scan")
+    elif not scan.get("ability"):
+        c_ha = _chk("Hidden Ability", "missing", "missing information")
     else:
         c_ha = _chk("Hidden Ability", "fail",
                     f"no HA access shown — breed {want} from an HA parent")
 
     egg = EGG_MOVES.get(_norm(want), set())
     scanned_moves = {_norm(m) for m in scan["moves"]}
+    full_moveset = len(scan["moves"]) >= 4  # else the scan dropped a move row
     req_egg = [m for m in req_moves if _norm(m) in egg]
     if not req_egg:
         c_egg = _chk("Egg moves", "na", "none required")
     else:
         miss = [m for m in req_egg if _norm(m) not in scanned_moves]
         c_egg = (_chk("Egg moves", "pass", ", ".join(req_egg)) if not miss
+                 else _chk("Egg moves", "missing", "missing information") if not full_moveset
                  else _chk("Egg moves", "fail", "breed in: " + ", ".join(miss)))
 
     r["breed"] = [c_iv, c_nat, c_ha, c_egg]
@@ -622,16 +632,18 @@ def check_slot(slot, block):
     if lv == 100:
         c_lv = _chk("Level", "pass", "100")
     elif lv is None:
-        c_lv = _chk("Level", "fail", "not read — must be 100")
+        c_lv = _chk("Level", "missing", "missing information")
     else:
         c_lv = _chk("Level", "fail", f"{lv} — train it to 100")
 
     if not bounds:
         c_ev = _chk("EVs", "na", "no stat bounds")
-    elif nat_ok is False or c_iv["status"] == "fail":
+    elif stats_pass:
+        c_ev = _chk("EVs", "pass", "stats in range" + (" at Lv100" if projected else ""))
+    elif c_nat["status"] in ("fail", "missing") or c_iv["status"] in ("fail", "missing"):
         c_ev = _chk("EVs", "blocked", "fix breed first")
     elif not eff:
-        c_ev = _chk("EVs", "na", "stats not read")
+        c_ev = _chk("EVs", "missing", "missing information")
     else:
         bad = {s: eff.get(s) for s, (lo, hi) in bounds.items()
                if eff.get(s) is None or not lo <= eff[s] <= hi}
@@ -645,6 +657,8 @@ def check_slot(slot, block):
 
     if not pinned_ab:
         c_ab = _chk("Ability", "na", "not pinned")
+    elif not scan.get("ability"):
+        c_ab = _chk("Ability", "missing", "missing information")
     elif _norm(scan.get("ability")) == _norm(want_ab):
         c_ab = _chk("Ability", "pass", want_ab)
     else:
@@ -666,14 +680,17 @@ def check_slot(slot, block):
     else:
         miss = [m for m in need if _norm(m) not in scanned_moves]
         c_mv = (_chk("Moveset", "pass", ", ".join(need)) if not miss
+                else _chk("Moveset", "missing", "missing information") if not full_moveset
                 else _chk("Moveset", "fail", "teach: " + ", ".join(miss)))
 
     if not slot["item"]:
         c_it = _chk("Item", "na", "not pinned")
+    elif scan.get("item") is None:
+        c_it = _chk("Item", "missing", "missing information")
     elif _norm(scan.get("item")) in {_norm(i) for i in slot["item"]}:
         c_it = _chk("Item", "pass", scan.get("item") or slot["item"][0])
     else:
-        c_it = _chk("Item", "fail", f"holding {scan.get('item') or 'nothing'} — give "
+        c_it = _chk("Item", "fail", f"holding {scan['item']} — give "
                     + " or ".join(slot["item"]))
 
     r["training"] = [c_lv, c_ev, c_ab, c_mv, c_it]
@@ -681,11 +698,13 @@ def check_slot(slot, block):
 
 
 def slot_ok(slot, block):
-    """True when every applicable check passes (grid / list roll-up)."""
+    """True when every applicable check passes (grid / list roll-up).
+    A 'missing' check counts as not-ok - can't confirm what didn't scan."""
     r = check_slot(slot, block)
     if not r["species_ok"] or r["evolve"]:
         return False
-    return all(c["status"] != "fail" for c in r["breed"] + r["training"])
+    return all(c["status"] not in ("fail", "missing")
+               for c in r["breed"] + r["training"])
 
 
 def validate(slot, block):
@@ -697,7 +716,7 @@ def validate(slot, block):
     if r["evolve"]:
         out.append(f"evolve {r['evolve']}")
     out += [f"{c['label']}: {c['note']}" for c in r["breed"] + r["training"]
-            if c["status"] == "fail"]
+            if c["status"] in ("fail", "missing")]
     return out
 
 
@@ -771,7 +790,7 @@ class ScanWindow:
         ttk.Button(left, text="Set region", command=self.set_region).pack(anchor="w")
         ttk.Label(left, text="○ not scanned   ✓ valid   ✗ invalid",
                   foreground="#888", font=("TkDefaultFont", 8)).pack(anchor="w", pady=(6, 0))
-        ttk.Label(left, text="✓ pass   ✗ fix   – n/a   ⋯ blocked",
+        ttk.Label(left, text="✓ pass   ✗ fix   – n/a   ⋯ blocked   ? missing",
                   foreground="#888", font=("TkDefaultFont", 8)).pack(anchor="w")
 
         ttk.Separator(body, orient="vertical").pack(side="left", fill="y", padx=10)
@@ -795,6 +814,7 @@ class ScanWindow:
         self.tree.tag_configure("fail", foreground="#c00")
         self.tree.tag_configure("na", foreground="#999")
         self.tree.tag_configure("blocked", foreground="#c80")
+        self.tree.tag_configure("missing", foreground="#9c27b0")
         self.tree.tag_configure("group", font=("TkDefaultFont", 9, "bold"))
         self.tree.pack(fill="x", pady=(0, 6))
         self.tree.bind("<Button-1>", self._tree_click)
@@ -874,6 +894,8 @@ class ScanWindow:
         st = {c["status"] for c in checks}
         if "fail" in st:
             return "✗"
+        if "missing" in st:
+            return "?"
         if "blocked" in st:
             return "⋯"
         return "–" if st == {"na"} else "✓"
@@ -894,10 +916,15 @@ class ScanWindow:
         extra = []
         if r["evolve"]:
             extra.append(f"⚑ evolve  {r['evolve']}")
+        missing = [c["label"] for c in r["breed"] + r["training"]
+                   if c["status"] == "missing"]
+        if missing:
+            extra.append("⚑ didn't scan: " + ", ".join(missing))
         ok = slot_ok(slot, self.scans[num])
         self.banner.config(
             text="      ".join([("✓ all checks pass" if ok else "✗ needs work")] + extra),
-            foreground="#0a0" if ok else "#c00")
+            foreground="#0a0" if ok else ("#9c27b0" if missing and not any(
+                c["status"] == "fail" for c in r["breed"] + r["training"]) else "#c00"))
 
         for group, checks in (("Breed", r["breed"]), ("Training", r["training"])):
             gid = self.tree.insert("", "end", open=True, tags=("group",),
