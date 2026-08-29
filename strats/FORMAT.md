@@ -85,15 +85,16 @@ legendary):
 
 | Check    | Passes when |
 |----------|-------------|
-| Level    | the mon is level 100 |
+| Level    | the mon is level 100 and already its final form (else "evolve … / train to 100") |
 | EVs      | the (projected) level-100 stats are all in range |
-| Ability  | the mon is currently on the pinned ability |
+| Ability  | the mon is on the pinned ability (grey when the strat says `Any`) |
 | Moveset  | every pinned non-egg move is present |
 | Item     | the held item matches `@ Item` |
 
 The IVs and Nature checks pass automatically whenever the scanned final
 stats already sit inside the bounds — they only flag a problem when the
-stats are out of range and re-breeding is the reason.
+stats are out of range and re-breeding is the reason. A short moveset or a
+mon with no item is only a problem if the strat pins something it's missing.
 
 ## `[Moves]` section — the in-raid move order
 
