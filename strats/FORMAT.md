@@ -115,7 +115,9 @@ P1 - Golduck Knock Off
 ```
 
 Clicking a raid's name in the main table opens this as a turn × position
-table, with a toggle to show every position or just one.
+table (mon name over the move), with a toggle to show every position or just
+one. The mon and move are split automatically; write `P1 - Golduck: Water
+Sport` if you want to be explicit.
 
 A check reads `–` when the block doesn't pin anything for it, and `⋯` when an
 earlier breed check has to be fixed first.
