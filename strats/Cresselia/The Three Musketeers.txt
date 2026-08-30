@@ -6,7 +6,8 @@
 
 1 - Hippowdon @ White Herb
 Ability: Sand Stream
-357 HP / 10+ Def / 203 SpD / 189+ Spe
+357 HP / 203 SpD / 189+ Spe
+Def >= Atk + 10
 - Captivate
 
 2 - Whimsicott @ Light Clay
@@ -84,7 +85,7 @@ Ability: Defiant
 
 3 - Crobat
 Ability: Any
-31-336 HP / 198-221 SpD / 290+ Spe
+313-336 HP / 198-221 SpD / 290+ Spe
 - Acid Spray
 
 4 - Gothitelle @ Choice Specs

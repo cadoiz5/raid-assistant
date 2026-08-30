@@ -67,6 +67,20 @@ Stat bounds are read at **level 100** — every raid mon must be level 100
 still a pre-evolution, its stats are projected to level 100 for the check and
 the report says to level up / evolve.
 
+### Cross-stat rules
+
+A line comparing two stats, on its own line, adds a rule the final stats must
+also satisfy — for the rare case where a bound depends on another stat:
+
+```
+Def >= Atk + 10      Def at least 10 above Atk
+Spe = SpD            Speed exactly equal to Sp. Def
+Spe <= Atk - 5
+```
+
+Operators: `>= <= > < =`, with an optional `+ N` / `- N` offset. A rule that
+fails shows up on the EVs check.
+
 ## What a scan is graded on
 
 The scan window shows two groups of four checks, derived from the block above:

@@ -153,12 +153,17 @@ def _parse_block(block):
     species, _, item = m.group(2).partition("@")
     slot = {"num": int(m.group(1)), "species": species.strip(),
             "item": [i.strip() for i in item.split("/") if i.strip()] or None,
-            "ability": None, "bounds": {}, "moves": [], "raw": block.strip()}
+            "ability": None, "bounds": {}, "rel": [], "moves": [], "raw": block.strip()}
     for ln in lines[1:]:
+        rm = re.match(r"(HP|Atk|Def|SpA|SpD|Spe)\s*(>=|<=|>|<|=)\s*"
+                      r"(HP|Atk|Def|SpA|SpD|Spe)\s*([+-]\s*\d+)?\s*$", ln)
         if ln.lower().startswith("ability:"):
             slot["ability"] = ln.split(":", 1)[1].strip()
         elif ln.startswith("-"):
             slot["moves"].append(ln[1:].strip())
+        elif rm:  # cross-stat rule, e.g. "Def >= Atk + 10"
+            off = int(rm.group(4).replace(" ", "")) if rm.group(4) else 0
+            slot["rel"].append((rm.group(1), rm.group(2), rm.group(3), off))
         elif re.search(r"\d.*\b(?:HP|Atk|Def|SpA|SpD|Spe)\b", ln):
             slot["bounds"].update(_parse_bounds(ln))
     return slot
@@ -191,6 +196,26 @@ def _fmt_bound(lo, hi):
     if lo == 0:
         return f"{hi}-"
     return f"{lo}-{hi}"
+
+
+def _rel_ok(rel, stats):
+    """(a, op, b, offset) against a {stat: value} dict -> True / False / None
+    (None when a stat needed for the comparison wasn't read)."""
+    a, op, b, off = rel
+    if stats.get(a) is None or stats.get(b) is None:
+        return None
+    av, bv = stats[a], stats[b] + off
+    return {">=": av >= bv, "<=": av <= bv, ">": av > bv,
+            "<": av < bv, "=": av == bv}[op]
+
+
+def _fmt_rel(rel, stats=None):
+    a, op, b, off = rel
+    tail = "" if not off else (f" + {off}" if off > 0 else f" - {-off}")
+    txt = f"{a} {op} {b}{tail}"
+    if stats and stats.get(a) is not None and stats.get(b) is not None:
+        txt += f"  ({stats[a]} vs {stats[b] + off})"
+    return txt
 
 
 def parse_strat(path):
@@ -601,9 +626,11 @@ def check_slot(slot, block):
     mult = _mult_fn(scan.get("nature"))
     projected = steps is not None or (scan.get("level") not in (100, None))
     eff = _project_stats(want, scan) if projected else scan["stats"]
+    rels = slot.get("rel", [])
+    rel_bad = [x for x in rels if eff and _rel_ok(x, eff) is False]
 
-    # does the mon, as it stands, already satisfy every stat bound?
-    stats_pass = bool(bounds) and bool(eff) and all(
+    # does the mon, as it stands, already satisfy every stat bound (and rule)?
+    stats_pass = bool(bounds or rels) and bool(eff) and not rel_bad and all(
         eff.get(s) is not None and lo <= eff[s] <= hi
         for s, (lo, hi) in bounds.items())
 
@@ -695,10 +722,15 @@ def check_slot(slot, block):
         c_lv = _chk("Level", "pass", "100") if not bits \
             else _chk("Level", "fail", ", ".join(bits))
 
-    if not bounds:
+    if rel_bad:
+        c_ev = _chk("EVs", "fail",
+                    "; ".join(_fmt_rel(x, eff) for x in rel_bad) + " not met")
+    elif not bounds and not rels:
         c_ev = _chk("EVs", "na", "no stat bounds")
     elif stats_pass:
         c_ev = _chk("EVs", "pass", "in range" + (" at Lv100" if projected else ""))
+    elif not bounds:
+        c_ev = _chk("EVs", "na", "rules only")
     elif c_nat["status"] in ("fail", "missing") or c_iv["status"] in ("fail", "missing"):
         c_ev = _chk("EVs", "blocked", "fix breed first")
     elif not eff:
@@ -898,7 +930,7 @@ class ScanWindow:
                                 key=lambda s: s["num"])
         if not self.slots:
             self.slots = [{"num": i, "species": f"Slot {i}", "item": None,
-                           "ability": None, "bounds": {}, "moves": [],
+                           "ability": None, "bounds": {}, "rel": [], "moves": [],
                            "raw": f"(slot {i} — no strat)"} for i in range(1, 7)]
 
     def _slot_by_num(self, num):
@@ -1021,6 +1053,8 @@ class ScanWindow:
         if req_egg:
             self.tree.insert(gid, "end", text="  Egg moves",
                              values=(", ".join(req_egg),))
+        for x in slot.get("rel", []):
+            self.tree.insert(gid, "end", text="  Rule", values=(_fmt_rel(x),))
 
     def _tree_click(self, ev):
         iid = self.tree.identify_row(ev.y)
