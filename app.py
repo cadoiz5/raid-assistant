@@ -109,14 +109,19 @@ class App:
 
     # ---------------- gear menu ----------------
     def _build_topbar(self):
-        """A thin strip with a gear button, top-right, that drops the whole
-        menu. Replaces the OS menu bar (which can't be themed on Windows)."""
-        self.topbar = ttk.Frame(self.root)
+        """The header strip: the character name on the left, a gear button on
+        the right that drops the whole menu (replaces the OS menu bar, which
+        can't be themed on Windows). Both sit on one line."""
+        self.topbar = ttk.Frame(self.root, padding=(10, 6, 6, 0))
         self.topbar.pack(side="top", fill="x")
+
+        self.header = ttk.Label(self.topbar, text="",
+                                font=("TkDefaultFont", 10, "bold"))
+        self.header.pack(side="left")
 
         self.gear = ttk.Menubutton(self.topbar, text="⚙", takefocus=False,
                                    style="Gear.TMenubutton")
-        self.gear.pack(side="right", padx=6, pady=4)
+        self.gear.pack(side="right")
         Tooltip(self.gear, "Menu")
 
         m = tk.Menu(self.gear, tearoff=0)
@@ -214,9 +219,7 @@ class App:
                                      command=self.character_new)
 
     def _build_grid(self):
-        self.grid = ttk.Frame(self.root, padding=10)
-        self.header = ttk.Label(self.grid, text="", font=("TkDefaultFont", 10, "bold"))
-        self.header.pack(anchor="w", pady=(0, 8))
+        self.grid = ttk.Frame(self.root, padding=(10, 4, 10, 10))
 
         self.table = ttk.Frame(self.grid)
         self.table.pack(fill="both", expand=True)
@@ -253,6 +256,7 @@ class App:
 
     def _show_start(self):
         self.character = None
+        self.header.config(text="")
         self.grid.pack_forget()
         for w in (self.start_msg, self.pick_row, self.create_btn):
             w.pack_forget()
