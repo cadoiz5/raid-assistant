@@ -1,3 +1,143 @@
+# Cresselia raid — "The Three Musketeers" strat.
+# Constraints for all four positions. Format: see strats/FORMAT.md
+# HA is auto-detected — don't write "(HA)" on the Ability line.
+
+[P1]
+
+1 - Hippowdon @ White Herb
+Ability: Sand Stream
+357 HP / 10+ Def / 203 SpD / 189+ Spe
+- Captivate
+
+2 - Whimsicott @ Light Clay
+Ability: Prankster
+204- SpD
+- Light Screen
+
+3 - Durant @ Choice Band
+Ability: Swarm
+284-288 HP / 326+ Def / 139-143 SpD / 268- Spe
+- X-Scissor
+
+4 - Braviary @ Rowap Berry
+Ability: Defiant
+316-342 HP / 368+ Atk / 160-186 SpD / 230+ Spe
+- Assurance
+
+5 - Milotic @ Covert Mantle
+Ability: Competitive
+320+ HP / 326+ SpA / 349 SpD / 157- Spe
+- Mud Sport
+- Safeguard
+- Brine
+
+6 - Empoleon @ Leftovers
+Ability: Competitive
+372 HP / 352+ SpA / 238 SpD / 157- Spe
+- Mist
+- Roost
+- Brine
+
+[P2]
+
+1 - Weavile @ Poison Barb
+Ability: Any
+253-285 HP / 305-343 Atk / 185-206 SpD / 294+ Spe
+- Fling
+
+2 - Bisharp @ Life Orb
+Ability: Defiant
+368+ Atk / 239 SpD
+- Sucker Punch
+
+3 - Sharpedo @ Choice Band
+Ability: Any
+281- HP / 356+ Atk / 77+ Def / 150- SpD / 271+ Spe
+- Assurance
+
+4 - Braviary @ Assault Gear
+Ability: Defiant
+368+ Atk / 196+ SpD / 168-196 Spe
+- Assurance
+
+5 - Milotic @ Covert Mantle
+Ability: Competitive
+320+ HP / 326+ SpA / 349 SpD / 160+ Spe
+- Brine
+
+6 - Empoleon @ Choice Specs
+Ability: Competitive
+352+ SpA / 297+ SpD / 160+ Spe
+- Brine
+
+[P3]
+
+1 - Breloom @ Choice Scarf
+Ability: Any
+124-171 SpD / 180+ Spe
+- Safeguard
+
+2 - Bisharp @ Choice Band
+Ability: Defiant
+303-334 HP / 322+ Atk / 198 SpD
+- Sucker Punch
+
+3 - Crobat
+Ability: Any
+31-336 HP / 198-221 SpD / 290+ Spe
+- Acid Spray
+
+4 - Gothitelle @ Choice Specs
+Ability: Competitive
+280+ HP / 317+ SpA / 317+ SpD / 166- Spe
+- Shadow Ball
+
+5 - Crawdaunt @ Poison Barb
+Ability: Adaptability
+256+ HP / 343+ Atk / 198+ SpD
+- Fling
+
+6 - Tyranitar @ Iron Ball
+Ability: Sand Stream
+341+ HP / 400+ Atk / 269 SpD / 158 Spe
+# If Brave: match Spe and SpD, 378+ Atk
+- Captivate
+- Assurance
+- Leer
+
+[P4]
+
+1 - Xatu @ Choice Scarf
+Ability: Any
+289-317 HP / 148-176 SpD / 196+ Spe
+# If frail: 294+ Spe @ Focus Sash
+- Lucky Chant
+
+2 - Bisharp @ Life Orb
+Ability: Defiant
+368+ Atk / 239 SpD
+- Sucker Punch
+
+3 - Gengar @ Ghost Gem
+Ability: Any
+255-286 HP / 385+ SpA / 180-211 SpD / 270 Spe
+- Hex
+
+4 - Gothitelle @ Choice Specs
+Ability: Competitive
+281- HP / 317+ SpA / 256- SpD / 198-229 Spe
+- Shadow Ball
+
+5 - Jynx @ Rowap Berry
+Ability: Any
+272- HP / 226- SpD / 268- Spe
+- Lucky Chant
+
+6 - Krookodile @ Choice Band
+Ability: Any
+331+ HP / 356+ Atk / 239 SpD / 268- Spe
+- Assurance
+
 [Moves]
 
 Turn 1
