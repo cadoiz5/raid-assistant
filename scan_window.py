@@ -26,7 +26,7 @@ import re
 import subprocess
 import sys
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import ttk, filedialog, messagebox
 
 import theme
 
@@ -330,6 +330,60 @@ def _scan_consistency(scan):
         if _exact_stat(base[i], ivs[s], evs.get(s, 0), sign) != stats[s]:
             return "Final stats don't match EVs/IVs/Nature"
     return None
+
+
+def _stat_signs(nature):
+    """[sign per STATS index] for a nature: None (HP), +1 boosted, -1 hindered, 0."""
+    nat = NATURES.get((nature or "").lower())
+    if nat is None:
+        return None
+    plus, minus = nat
+    return [None if i == 0 else 1 if i == plus else -1 if i == minus else 0
+            for i in range(len(STATS))]
+
+
+def recompute_stats(scan):
+    """The final stats implied by the scanned base / IV / EV / nature. A stat
+    whose IV wasn't read is left at its scanned value (can't recompute it);
+    only if that's missing too is it computed at IV 31. -> {stat: value} or
+    None if base stats / nature are unknown."""
+    base = BASE_STATS.get(scan.get("species"))
+    signs = _stat_signs(scan.get("nature"))
+    if not base or signs is None:
+        return None
+    stats, ivs, evs = scan.get("stats") or {}, scan.get("ivs") or {}, scan.get("evs") or {}
+    out = {}
+    for i, s in enumerate(STATS):
+        if s in ivs:
+            out[s] = _exact_stat(base[i], ivs[s], evs.get(s, 0), signs[i])
+        else:
+            out[s] = stats.get(s, _exact_stat(base[i], 31, evs.get(s, 0), signs[i]))
+    return out
+
+
+def solve_evs_for_stats(scan):
+    """EVs that make base / IV / nature reproduce the scanned final stats. Only
+    the stats that currently disagree are re-solved; the rest keep their scanned
+    EV. -> {stat: ev} (all six) or None if a stat can't be hit within 0..252 or
+    the total tops the EV cap."""
+    base = BASE_STATS.get(scan.get("species"))
+    signs = _stat_signs(scan.get("nature"))
+    if not base or signs is None:
+        return None
+    stats, ivs = scan.get("stats") or {}, scan.get("ivs") or {}
+    out = dict.fromkeys(STATS, 0)
+    out.update({s: v for s, v in (scan.get("evs") or {}).items() if s in out})
+    for i, s in enumerate(STATS):
+        if s not in stats or s not in ivs:
+            continue
+        if _exact_stat(base[i], ivs[s], out[s], signs[i]) == stats[s]:
+            continue                       # this stat already lines up - leave it
+        hit = next((ev for ev in range(0, 253, 4)
+                    if _exact_stat(base[i], ivs[s], ev, signs[i]) == stats[s]), None)
+        if hit is None:
+            return None
+        out[s] = hit
+    return out if sum(out.values()) <= EV_CAP else None
 
 
 def _ev_window(base, iv, mult, lo, hi):
@@ -750,6 +804,8 @@ class ScanWindow:
         self.banner = ttk.Label(right, text="", foreground=theme.FG_DIM,
                                 font=("TkDefaultFont", 9), justify="left")
         self.banner.pack(anchor="w", pady=(2, 2))
+        self._warn_slot = None  # slot num whose banner offers a "click to fix"
+        self.banner.bind("<Button-1>", self._banner_click)
 
         self.tree = ttk.Treeview(right, columns=("v",), show="tree", height=12,
                                  selectmode="none")
@@ -848,6 +904,8 @@ class ScanWindow:
     def _show_check(self, num):
         self.tree.delete(*self.tree.get_children())
         self._notes = {}
+        self._warn_slot = None
+        self.banner.config(cursor="")
         slot = self._slot_by_num(num)
         if slot is None:
             self.banner.config(text="")
@@ -863,7 +921,9 @@ class ScanWindow:
 
         extra = []
         if r["warn"]:
-            extra.append("⚠ " + r["warn"])
+            extra.append("⚠ " + r["warn"] + "  (click to fix)")
+            self._warn_slot = num
+            self.banner.config(cursor="hand2")
         missing = [c["label"] for c in r["breed"] + r["training"]
                    if c["status"] == "missing"]
         if missing:
@@ -922,6 +982,75 @@ class ScanWindow:
         iid = self.tree.identify_row(ev.y)
         if iid in getattr(self, "_notes", {}):
             self._status(self._notes[iid])
+
+    # ---- fixing an inconsistent scan ----
+    def _banner_click(self, _ev=None):
+        """The banner offers this when the scanned final stats don't match the
+        IVs/EVs/nature: recompute the stats, or back-solve the EVs."""
+        num = self._warn_slot
+        if num is None or num not in self.scans:
+            return
+        scan = parse_scan(self.scans[num])
+        m = tk.Menu(self.win, tearoff=0)
+        m.add_command(label="Recompute the final stats from EVs / IVs / Nature",
+                      command=lambda: self._fix_discrepancy(num, "stats"))
+        ev_ok = solve_evs_for_stats(scan) is not None
+        m.add_command(label=("Adjust the EVs to match the final stats"
+                             if ev_ok else "Adjust the EVs to match  (not possible)"),
+                      state="normal" if ev_ok else "disabled",
+                      command=lambda: self._fix_discrepancy(num, "evs"))
+        try:
+            m.tk_popup(self.win.winfo_pointerx(), self.win.winfo_pointery())
+        finally:
+            m.grab_release()
+
+    def _fix_discrepancy(self, num, how):
+        scan = parse_scan(self.scans[num])
+        if how == "stats":
+            new = recompute_stats(scan)
+            if not new:
+                return
+            before = scan.get("stats") or {}
+            line = "Stats: " + " / ".join(f"{new[s]} {s}" for s in STATS)
+            delta = ", ".join(f"{s} {before.get(s, '?')}→{new[s]}"
+                              for s in STATS if before.get(s) != new[s])
+            prefix, blurb = "stats:", "Recompute the final stats (unread IVs are taken as 31)?"
+        else:
+            new = solve_evs_for_stats(scan)
+            if not new:
+                return
+            before = scan.get("evs") or {}
+            parts = " / ".join(f"{new[s]} {s}" for s in STATS if new[s])
+            line = "EVs: " + (parts or "0")
+            delta = ", ".join(f"{s} {before.get(s, 0)}→{new[s]}"
+                              for s in STATS if before.get(s, 0) != new[s])
+            prefix, blurb = "evs:", "Set the EVs so they produce the scanned final stats?"
+        if not messagebox.askyesno("Fix scan", f"{blurb}\n\n{delta or 'no change'}",
+                                   parent=self.win):
+            return
+        self._replace_scan_line(num, prefix, line)
+
+    def _replace_scan_line(self, num, prefix, new_line):
+        """Swap the 'Prefix: …' line of scan block `num` (insert before the moves
+        if absent), save, and refresh the view."""
+        lines = self.scans[num].splitlines()
+        for i, ln in enumerate(lines):
+            if ln.strip().lower().startswith(prefix):
+                lines[i] = new_line
+                break
+        else:
+            at = next((i for i, ln in enumerate(lines)
+                       if ln.strip().startswith("-")), len(lines))
+            lines.insert(at, new_line)
+        self.scans[num] = "\n".join(lines)
+        self._write_scans()
+        if self.active == num:
+            body = re.sub(r"^\s*\d+\s*-\s*", "", self.scans[num], count=1)
+            self._set_text(body)
+        self._refresh_list()
+        self._show_check(num)
+        self.app.refresh_grid()
+        self._status("scan updated")
 
     def _sync_save_btn(self):
         dirty = (self.active is not None
