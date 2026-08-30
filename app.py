@@ -25,10 +25,12 @@ Run:  python app.py
 import os
 import re
 import shutil
+import threading
 import tkinter as tk
 from tkinter import ttk, simpledialog, messagebox
 
 import theme
+import updater
 from prefs import Prefs
 from scan_window import ScanWindow, evaluate_position
 from moves_window import MovesWindow
@@ -102,6 +104,7 @@ class App:
         self._build_start()
         self._build_grid()
         self._boot()
+        self._start_update_check()
 
     # ---------------- menu ----------------
     def _build_menu(self):
@@ -118,8 +121,65 @@ class App:
         team.add_command(label="New", command=self.team_new)
         menubar.add_cascade(label="Team", menu=team)
 
+        self._menubar = menubar
+        self._update_label = "Check for Updates"
+        menubar.add_command(label=self._update_label, command=self.check_updates)
+        self._update_idx = menubar.index("end")
+
         self.root.config(menu=menubar)
         self._refresh_change_menu()
+
+    # ---------------- self-update ----------------
+    def _start_update_check(self):
+        """Background: see if origin/main is ahead, and if so flag the menu."""
+        if not updater.available():
+            return
+
+        def worker():
+            info = updater.check()
+            if info and info.get("behind"):
+                self._pending_update = info
+                self.root.after(0, self._flag_update)
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _flag_update(self):
+        info = getattr(self, "_pending_update", None)
+        if info:
+            self._menubar.entryconfigure(
+                self._update_idx, label=f"↑ Update available ({info['behind']})")
+
+    def check_updates(self):
+        if not updater.available():
+            messagebox.showinfo(
+                "Updates", "This copy isn't a git checkout, so it can't update "
+                "itself.\nRe-download it, or run 'git pull' in the folder.")
+            return
+        self.root.config(cursor="watch")
+        self.root.update_idletasks()
+        info = getattr(self, "_pending_update", None) or updater.check()
+        self.root.config(cursor="")
+        if info is None:
+            messagebox.showwarning("Updates", "Couldn't reach GitHub — try again later.")
+            return
+        if not info["behind"]:
+            messagebox.showinfo("Updates", "You're on the latest version.")
+            return
+        lines = "\n".join(f"  • {s}" for s in info["subjects"][:10])
+        more = "\n  …" if len(info["subjects"]) > 10 else ""
+        note = ("\n\nYou have local changes — the update will only go through if "
+                "it can fast-forward cleanly." if info["dirty"] else "")
+        if not messagebox.askyesno(
+                "Updates", f"{info['behind']} update(s) available:\n\n{lines}{more}"
+                f"{note}\n\nInstall now?"):
+            return
+        ok, out = updater.update()
+        if ok:
+            self._pending_update = None
+            self._menubar.entryconfigure(self._update_idx, label=self._update_label)
+            messagebox.showinfo("Updates", "Updated. Restart the app to load the new version.")
+        else:
+            messagebox.showerror("Updates", f"Update failed:\n\n{out}")
 
     def _refresh_change_menu(self):
         self.change_menu.delete(0, "end")

@@ -13,6 +13,7 @@ per-raid "strat" constraints (species / item / ability / stat bounds / moves).
 | `scan_window.py` | Per-position scan window: scan 6 Pokemon, validate each against the loaded strat. |
 | `moves_window.py` | The in-raid move-order table (opened by clicking a raid name). |
 | `theme.py` | The GUI's dark theme (`theme.apply(root)`, called once at startup). |
+| `updater.py` | Self-update: if run from a `git clone`, checks `origin/main` and fast-forwards. |
 | `breed_calc.py` | Turns a strat slot's stat bounds into the nature / IV / EV spread to breed for (shown for not-yet-scanned slots). |
 | `build_lists.py` | Regenerates `data/` (reference name lists + `species_stats.json`) from PokeMMO's dex dump (`../dump/*.json`). |
 | `data/` | Committed reference data the parser snaps to: `moves.txt`, `abilities.txt`, `items.txt`, `species.txt`, `species_stats.json`. |
@@ -36,6 +37,14 @@ The script auto-detects Tesseract on `PATH` or in the usual
 
 The `data/` reference lists are committed, so the tools work out of the box.
 Rerun `python build_lists.py` only when the PokeMMO dex dump is refreshed.
+
+## Updating
+
+Install by cloning the repo (`git clone`). On start-up the app quietly checks
+GitHub; when there are new commits the menu bar shows **↑ Update available** —
+click it to fast-forward. It only applies a clean fast-forward, so local edits
+and unpushed commits are never overwritten. Needs `git` on `PATH`; a zip
+download just doesn't show the option.
 
 ## Local data (not committed)
 
