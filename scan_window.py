@@ -844,24 +844,36 @@ class ScanWindow:
                 self._notes[iid] = f"{c['label']} — {note}" if note else c["label"]
 
     def _show_target(self, slot):
-        """Not-scanned slot: show the nature / IV / EV spread to breed for."""
-        from breed_calc import recommend, fmt_ivs, fmt_evs  # avoids import cycle
+        """Not-scanned slot: the IV ranges / natures to breed for (same maths as
+        the pokepaste-maker Breeding.txt)."""
+        from breed_calc import recommend  # lazy - avoids an import cycle
         rec = recommend(slot["species"], slot["bounds"])
-        if not rec:
-            self.banner.config(text="not scanned yet", foreground=theme.FG_DIM)
-            return
+
+        ha = HIDDEN_ABILITY.get(_norm(slot["species"]))
+        want_ab = (slot["ability"] or "").strip()
+        is_ha = bool(want_ab and want_ab.lower() != "any"
+                     and ha and _norm(want_ab) == _norm(ha))
+
         self.banner.config(text="not scanned — breed for:", foreground=theme.FG_DIM)
         gid = self.tree.insert("", "end", open=True, tags=("group",),
-                               text="Target spread", values=("",))
-        rows = [("Nature", f"{rec['nature']}  ({rec['nature_effect']})"),
-                ("IVs", fmt_ivs(rec["ivs"])),
-                ("EVs", fmt_evs(rec["evs"]))]
-        for label, val in rows:
-            self.tree.insert(gid, "end", text=f"  {label}", values=(val,))
-        for n in rec["notes"]:
-            iid = self.tree.insert(gid, "end", tags=("fail",),
-                                   text="  ⚠", values=(n,))
-            self._notes[iid] = n
+                               text="Target spread" + (" (HA)" if is_ha else ""),
+                               values=("",))
+        if not rec:
+            self.tree.insert(gid, "end", tags=("na",), text="  IVs",
+                             values=("base stats unknown",))
+            return
+        if rec.get("error"):
+            iid = self.tree.insert(gid, "end", tags=("fail",), text="  ⚠",
+                                   values=(rec["error"],))
+            self._notes[iid] = rec["error"]
+            return
+        self.tree.insert(gid, "end", text="  IVs", values=(rec["ivs"],))
+        self.tree.insert(gid, "end", text="  Nature", values=(rec["natures"],))
+        egg = EGG_MOVES.get(_norm(slot["species"]), set())
+        req_egg = [m for m in slot["moves"] if _norm(m) in egg]
+        if req_egg:
+            self.tree.insert(gid, "end", text="  Egg moves",
+                             values=(", ".join(req_egg),))
 
     def _tree_click(self, ev):
         iid = self.tree.identify_row(ev.y)
