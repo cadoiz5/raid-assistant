@@ -12,6 +12,7 @@ per-raid "strat" constraints (species / item / ability / stat bounds / moves).
 | `app.py` | Main GUI. Coverage grid of the 6 raids x positions P1-P4, scoped to a "character" (a PokeMMO account). Run `python app.py`. |
 | `scan_window.py` | Per-position scan window: scan 6 Pokemon, validate each against the loaded strat. |
 | `moves_window.py` | The in-raid move-order table (opened by clicking a raid name). |
+| `theme.py` | The GUI's dark theme (`theme.apply(root)`, called once at startup). |
 | `breed_calc.py` | Turns a strat slot's stat bounds into the nature / IV / EV spread to breed for (shown for not-yet-scanned slots). |
 | `build_lists.py` | Regenerates `data/` (reference name lists + `species_stats.json`) from PokeMMO's dex dump (`../dump/*.json`). |
 | `data/` | Committed reference data the parser snaps to: `moves.txt`, `abilities.txt`, `items.txt`, `species.txt`, `species_stats.json`. |

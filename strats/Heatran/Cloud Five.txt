@@ -14,32 +14,137 @@ Ability: Cloud Nine
 354 HP / 267 SpD / 180-226 Spe
 - Defog
 
-3 - Swoobat
+3 - Swoobat @ Choice Specs
+Ability: Any
+251-275 HP / 122-146 SpD / 254+ Spe
+- Trick
 
-4 - Pelipper
+4 - Pelipper @ Assault Gear
+Ability: Drizzle
+261-271 HP / 280+ SpA / 192-202 SpD / 228+ Spe
+- Hydro Pump
 
-5 - Swanna
+5 - Swanna @ Choice Scarf
+Ability: Any
+261-328 HP / 117-162 SpD / 298+ Spe
+- Lucky Chant
 
-6 - Kingdra
+6 - Kingdra @ Binding Band
+Ability: Swift Swim
+286+ HP / 220+ Def / 316+ SpA / 283+ SpD
+- Whirlpool
+- Brine
 
 [P2]
 
-# TODO
+1 - Swanna @ Choice Scarf
+Ability: Any
+288-316 HP / 159-187 SpD / 298+ Spe
+- Lucky Chant
+
+2 - Flygon @ Choice Specs
+Ability: Levitate
+285-305 HP / 267+ SpA / 239 SpD / 254+ Spe
+- Earth Power
+
+3 - Dragonite @ Light Clay
+Ability: Inner Focus
+323 HP / 236 SpD / 254+ Spe
+- Light Screen
+
+4 - Seismitoad @ Life Orb
+Ability: Swift Swim
+351- HP / 280+ SpA / 221+ SpD
+- Mud Shot
+
+5 - Pelipper @ Ground Gem
+Ability: Drizzle
+314+ SpA / 133+ SpD / 228+ Spe
+# Hidden Power: Ground type
+- Hidden Power
+
+6 - Politoed @ Covert Mantle
+Ability: Drizzle
+315+ HP / 279 SpA / 230+ SpD / 254+ Spe
+- Water Sport
+- Weather Ball
 
 [P3]
 
-# TODO
+1 - Infernape @ Choice Scarf
+Ability: Any
+303 HP / 178 Def / 178 SpD / 199+ Spe
+- Captivate
+- Switcheroo
+- Scary Face
+
+2 - Swampert @ Flame Orb
+Ability: Any
+341 HP / 239 SpD / 228+ Spe
+- Fling
+- Scary Face
+- Captivate
+
+3 - Seismitoad @ Ground Gem
+Ability: Any
+340-351 HP / 286+ SpA / 204-215 SpD / 228+ Spe
+- Earth Power
+
+4 - Salamence
+Ability: Intimidate
+331- HP / 215- SpD / 254+ Spe
+- Defog
+
+5 - Octillery @ Choice Specs
+Ability: Suction Cups
+316 HP / 186 Def / 297+ SpA / 186 SpD / 169-176 Spe
+- Hydro Pump
+
+6 - Kingdra @ Mystic Water
+Ability: Swift Swim
+286+ HP / 220+ Def / 316+ SpA / 283+ SpD
+- Brine
 
 [P4]
 
-# TODO
+1 - Whimsicott @ Choice Band
+Ability: Prankster
+324 HP / 224 SpD
+- Switcheroo
+- Charm
+
+2 - Flygon @ Choice Specs
+Ability: Levitate
+285-305 HP / 267+ SpA / 196 SpD / 294+ Spe
+- Earth Power
+
+3 - Octillery @ Mystic Water
+Ability: Suction Cups
+316 HP / 186 Def / 327+ SpA / 186 SpD / 169-176 Spe
+- Hydro Pump
+- Brine
+
+4 - Ninetales @ Rowap Berry
+Ability: Flash Fire
+326-337 HP / 238-249 Def / 225-236 SpD / 228-252 Spe
+- Fake Tears
+
+5 - Pelipper @ Assault Gear
+Ability: Drizzle
+252-261 HP / 289+ SpA / 195-204 SpD / 228+ Spe
+- Brine
+
+6 - Politoed @ Water Gem
+Ability: Drizzle
+279 SpA / 254+ Spe
+- Weather Ball
 
 [Moves]
 
 Turn 1
 P1 - Golduck Water Sport
 P2 - Swanna Lucky Chant
-P3 - Infernape 
+P3 - Infernape
 * Charizard Captivate Ad
 * Magmortar Captivate Ad
 * Garchomp Switcheroo Ad
@@ -62,3 +167,53 @@ P3 - Swampert
 * Golem Fling Ad
 * Salamence Captivate Ad
 P4 - Flygon Earth Power
+
+Turn 3
+P1 - Altaria Defog Ad
+P2 - Flygon Earth Power
+P3 - Seismitoad Earth Power
+P4 - Flygon Earth Power
+
+Turn 4
+P1 - Swoobat Trick Ad
+P2 - Flygon Earth Power
+P3 - Salamence Defog
+P4 - Flygon Earth Power
+
+Turn 5
+P1 - Pelipper Hydro Pump
+P2 - Dragonite Light Screen
+P3 - Octillery Hydro Pump
+P4 - Octillery Hydro Pump
+
+Turn 6
+P1 - Swanna Lucky Chant
+P2 - Seismitoad Mud Shot
+P3 - Octillery Hydro Pump
+P4 - Octillery Hydro Pump
+
+Turn 7
+P1 - Kingdra Whirlpool
+P2 - Pelipper Hidden Power
+P3 - Octillery Hydro Pump
+P4 - Octillery Brine
+
+Turn 8
+P1 - Kingdra Brine
+P2 - Politoed Water Sport
+P3 - Kingdra Brine
+P4 - Ninetales Fake Tears
+
+Turn 9
+P1 - Kingdra Brine
+P2 - Politoed Weather Ball
+P3 - Kingdra Brine
+P4 - Pelipper Brine
+
+Turn 10
+P1 - Kingdra Brine
+P3 - Kingdra Brine
+P4 - Politoed Weather Ball
+
+Turn 11
+P3 - Kingdra Brine
