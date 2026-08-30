@@ -1052,9 +1052,9 @@ class ScanWindow:
                          values=("required" if is_ha else "not needed",))
         egg = EGG_MOVES.get(_norm(slot["species"]), set())
         req_egg = [m for m in slot["moves"] if _norm(m) in egg]
-        if req_egg:
-            self.tree.insert(gid, "end", text="  Egg moves",
-                             values=(", ".join(req_egg),))
+        self.tree.insert(gid, "end", text="  Egg moves",
+                         tags=() if req_egg else ("na",),
+                         values=(", ".join(req_egg) if req_egg else "none",))
         for x in slot.get("rel", []):
             self.tree.insert(gid, "end", text="  Rule", values=(_fmt_rel(x),))
 
