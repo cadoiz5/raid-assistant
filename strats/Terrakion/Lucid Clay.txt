@@ -1,0 +1,79 @@
+[Moves]
+
+Turn 1
+P1 - Stantler Reflect
+P2 - Stantler Trick
+P3 - Murkrow Tailwind
+P4 - Pelipper Defog
+
+Turn 2
+P1 - Samurott Hydro Pump
+P2 - Samurott Hydro Pump
+P3 - Samurott Hydro Pump
+P4 - Jirachi Lucky Chant
+
+Turn 3
+P1 - Samurott Hydro Cannon
+P2 - Samurott Hydro Cannon
+P3 - Samurott Hydro Cannon
+P4 - Jirachi Wish
+
+Turn 4
+P1 - Poliwrath Belly Drum
+P2 - Claydol Psych Up P1
+P3 - Claydol Trick Room
+P4 - Claydol Power Swap Ad
+
+Turn 5
+P1 - Claydol Psych Up P2
+P2 - Claydol Zen Headbutt
+P3 - Claydol Psych Up P2
+P4 - Claydol Safeguard
+
+Turn 6
+P1 - Claydol Reflect
+P2 - Claydol Zen Headbutt
+P3 - Claydol Zen Headbutt
+P4 - Claydol Gravity
+
+Turn 7
+P1 - Claydol Drill Run
+P2 - Claydol Drill Run
+P3 - Claydol Drill Run
+P4 - Smeargle Lucky Chant
+
+Turn 8
+P1 - Sableye Tickle
+P2 - Ferrothorn Gyro Ball
+P3 - Ferrothorn Gyro Ball
+P4 - Gallade Quick Guard
+
+Turn 9
+P1 - Sableye Quash
+P2 - Ferrothorn Gyro Ball
+P3 - Ferrothorn Gyro Ball
+P4 - Gallade Trick Room
+
+Turn 10
+P1 - Torterra Wood Hammer
+P2 - Sableye Will-O-Wisp
+P3 - Medicham Close Combat
+P4 - Medicham Close Combat
+
+Turn 11
+P1 - Torterra Wide Guard
+P2 - Torterra Tickle
+P3 - Garchomp Helping Hand Any
+P4 - Conkeldurr Low Kick
+
+Turn 12
+P1 - Torterra Wood Hammer
+P2 - Torterra Wood Hammer
+P3 - Garchomp Helping Hand Any
+P4 - Conkeldurr Low Kick
+
+Turn 13
+P1 - Torterra Wood Hammer
+P2 - Torterra Wood Hammer
+P3 - Garchomp Helping Hand Any
+P4 - -

@@ -1,0 +1,91 @@
+[Moves]
+
+Turn 1
+P1 - Jynx Lucky Chant
+P2 - Jynx Reflect
+P3 - Jynx Trick
+P4 - Toxicroak Aerial Ace
+
+Turn 2
+P1 - Skarmory Brave Bird
+P2 - Skarmory Brave Bird
+P3 - Skarmory Brave Bird
+P4 - Toxicroak Aerial Ace
+
+Turn 3
+P1 - Skarmory Brave Bird
+P2 - Skarmory Brave Bird
+P3 - Skarmory Brave Bird
+P4 - Skarmory Brave Bird
+
+Turn 4
+P1 - Skarmory Dies
+P2 - Skarmory Dies
+P3 - Skarmory Dies
+P4 - Skarmory Dies
+
+Turn 5
+P1 - Staraptor Brave Bird
+P2 - Staraptor Brave Bird
+P3 - Staraptor Brave Bird
+P4 - Staraptor Brave Bird
+
+Turn 6
+P1 - Staraptor Final Gambit
+P2 - Staraptor Final Gambit
+P3 - Staraptor Final Gambit
+P4 - Staraptor Final Gambit
+
+Turn 7
+P1 - Gliscor Acrobatics
+P2 - Gliscor Acrobatics
+P3 - Gliscor Acrobatics
+P4 - Jynx Lucky Chant
+
+Turn 8
+P1 - Gliscor Dies
+P2 - Gliscor Dies
+P3 - Gliscor Brick Break
+P4 - Metagross Trick
+
+Turn 9
+P1 - Metagross Brick Break
+P2 - Metagross Reflect
+P3 - Gliscor Dies
+P4 - Metagross Dies
+
+Turn 10
+P1 - Metagross Explosion
+P2 - Metagross Explosion
+P3 - Illumise Charm
+P4 - Garchomp Earthquake
+
+Turn 11
+P1 - Garchomp Dig
+P2 - Garchomp Dig
+P3 - Garchomp Dig
+P4 - Garchomp Dig
+
+Turn 12
+P1 - Garchomp: (Dig hits)
+P2 - Garchomp: (Dig hits)
+P3 - Garchomp: (Dig hits)
+P4 - Garchomp: (Dig hits)
+
+Turn 13
+P1 - Garchomp Dig
+P2 - Garchomp Dig
+P3 - Garchomp Dig
+P4 - Garchomp Dig
+
+Turn 14
+P1 - Garchomp: (Dig hits)
+P2 - Garchomp: (Dig hits)
+P3 - Garchomp: (Dig hits)
+P4 - Garchomp: (Dig hits)
+
+Turn 15
+P1 - Garchomp Dig
+P2 - Garchomp Dig
+P3 - Garchomp Dig
+P4 - Garchomp Dig

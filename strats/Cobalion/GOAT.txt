@@ -1,0 +1,55 @@
+[Moves]
+
+Turn 1
+P1 - Darmanitan Flare Blitz
+P2 - Darmanitan Flare Blitz
+P3 - Ninetales Weather Ball
+P4 - Jirachi Reflect
+
+Turn 2
+P1 - Charizard Weather Ball
+P2 - Charizard Weather Ball
+P3 - Charizard Weather Ball
+P4 - Jirachi Lucky Chant
+
+Turn 3
+P1 - Reuniclus Trick Room
+P2 - Nidoking Earth Power
+P3 - Whimsicott Switcheroo
+P4 - Jirachi Light Screen
+
+Turn 4
+P1 - Reuniclus Gravity
+P2 - Nidoking Earth Power
+P3 - Ampharos Focus Blast
+P4 - Ampharos Focus Blast
+
+Turn 5
+P1 - Ampharos Focus Blast
+P2 - Ampharos Focus Blast
+P3 - Ampharos Focus Blast
+P4 - Ampharos Focus Blast
+
+Turn 6
+P1 - Ampharos Focus Blast
+P2 - Kingdra Brine
+P3 - Ampharos Focus Blast
+P4 - Nidoking Earth Power
+
+Turn 7
+P1 - Lucario Focus Blast
+P2 - Kingdra Brine
+P3 - Lucario Focus Blast
+P4 - Lucario Focus Blast
+
+Turn 8
+P1 - Empoleon Hydro Cannon
+P2 - Empoleon Hydro Cannon
+P3 - Empoleon Hydro Cannon
+P4 - Murkrow Quash
+
+Turn 9
+P1 - -
+P2 - -
+P3 - -
+P4 - Ferrothorn Protect

@@ -123,12 +123,15 @@ explicit.
 
 ### Target
 
-A move hits the boss by default. End the line with `Ad`, `Boss`, or `Self`
-to say otherwise — it shows as `Captivate → Ad` in the table.
+A move hits the boss by default. End the line with `Ad`, `Boss`, `Self`, or a
+teammate `P1`–`P4` to say otherwise — it shows as `Captivate → Ad` in the
+table. The target word may be wrapped in parens.
 
 ```
 P1 - Golduck Water Sport        (on the boss)
 P3 - Infernape Captivate Ad     (on the ad)
+P2 - Claydol Psych Up P1        (on the P1 player)
+P2 - Claydol Power Swap (Ad)    (parens are optional)
 ```
 
 ### Ad-dependent moves

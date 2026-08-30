@@ -18,6 +18,7 @@ import re
 import tkinter as tk
 from tkinter import ttk
 
+import theme
 from scan_window import HERE, STRATS, center_over, evaluate_position, strat_names
 
 POSITIONS = ["P1", "P2", "P3", "P4"]
@@ -52,9 +53,14 @@ def split_action(text):
 
 
 def _split_target(text):
-    """'Captivate Ad' -> ('Captivate', 'Ad'); 'Water Sport' -> ('Water Sport', '')."""
-    m = re.match(r"(.*?)\s+(ad|boss|self)$", text.strip(), re.I)
-    return (m.group(1).strip(), m.group(2).capitalize()) if m else (text.strip(), "")
+    """'Captivate Ad' -> ('Captivate', 'Ad'); 'Psych Up (P2)' -> ('Psych Up', 'P2');
+    'Water Sport' -> ('Water Sport', '').  A trailing Ad / Boss / Self / P1-P4 is the
+    move's target; the parens around it are optional."""
+    m = re.match(r"(.*?)\s+\(?(ad|boss|self|p[1-4])\)?$", text.strip(), re.I)
+    if not m:
+        return text.strip(), ""
+    tgt = m.group(2).upper() if m.group(2)[0] in "pP" else m.group(2).capitalize()
+    return m.group(1).strip(), tgt
 
 
 def parse_moves(path):
@@ -144,7 +150,7 @@ class MovesWindow:
         self.body.pack(fill="both", expand=True, pady=(8, 0))
         self.table = None
 
-        self.info = ttk.Label(frame, text="", foreground="#888")
+        self.info = ttk.Label(frame, text="", foreground=theme.FG_DIM)
         self.info.pack(fill="x", pady=(8, 0))
 
         win.bind("<Escape>", lambda e: win.destroy())
@@ -227,17 +233,17 @@ class MovesWindow:
         for i, turn in enumerate(self.turns):
             tl = ttk.Label(self.table, text=turn["turn"], anchor="nw")
             tl.grid(row=i + 1, column=0, sticky="nw", padx=(0, 8), pady=3)
-            self._painters.append((i, None, [(tl, "#000000")]))
+            self._painters.append((i, None, [(tl, theme.FG)]))
             for c, p in enumerate(POSITIONS, start=1):
                 mon, mv = self._cell_text(turn["actions"].get(p))
                 cell = ttk.Frame(self.table, relief="solid", borderwidth=1,
                                  padding=(6, 3), cursor="hand2")
                 nl = ttk.Label(cell, text=mon or "–", font=bold, cursor="hand2")
-                ml = ttk.Label(cell, text=mv, foreground="#606060", cursor="hand2")
+                ml = ttk.Label(cell, text=mv, foreground=theme.MOVE_FG, cursor="hand2")
                 nl.pack(anchor="w")
                 ml.pack(anchor="w")
                 cell.grid(row=i + 1, column=c, sticky="ew", padx=1, pady=1)
-                self._painters.append((i, p, [(nl, "#000000"), (ml, "#606060")]))
+                self._painters.append((i, p, [(nl, theme.FG), (ml, theme.MOVE_FG)]))
                 for w in (cell, nl, ml):
                     w.bind("<Button-1>", lambda e, n=i: self._toggle_row(n))
 
@@ -256,4 +262,4 @@ class MovesWindow:
             muted = turn_i in self.done or (
                 pos is not None and not self.col_vars[pos].get())
             for lbl, fg in items:
-                lbl.configure(foreground="#bcbcbc" if muted else fg)
+                lbl.configure(foreground=theme.MUTED if muted else fg)

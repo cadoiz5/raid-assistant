@@ -1,12 +1,12 @@
 [P1]
 
 1 - Raichu @ Rowap Berry
-Ability: Lightning Rod
+Ability: Lightningrod
 324 HP / 237 SpD / 280+ Spe
 - Lucky Chant
 
 2 - Heracross @ Choice Band / Bug Gem
-Ability: Any 
+Ability: Any
 349 Atk / 280 Spe
 - Megahorn
 
@@ -19,14 +19,14 @@ Ability: Any
 4 - Crawdaunt @ Iron Ball
 Ability: Adaptability
 372 Atk / 103 Spe
-- Fling 
+- Fling
 
-5 - Slowbro @ Rocky Helmet 
-Ability: Oblivious 
+5 - Slowbro @ Rocky Helmet
+Ability: Oblivious
 394 HP / 350 Def / 234+ SpA / 185-190 SpD / 65-69 Spe
 - Psych Up
 - Psychic
-- Iron Defense 
+- Iron Defense
 - Slack Off
 
 6 - Conkeldurr @ Life Orb
@@ -39,20 +39,20 @@ Ability: Any
 
 [P2]
 
-1 - Mr. Mime @ Choice Scarf 
+1 - Mr. Mime @ Choice Scarf
 Ability: Soundproof
 247 HP / 276 SpD / 216 Spe
 - Trick
 
-2 - Krookodile @ Choice Band 
+2 - Krookodile @ Choice Band
 Ability: Intimidate
 366 Atk / 283 Spe
-- Assurance 
+- Assurance
 
-3 - Arcanine @ Rowap Berry 
+3 - Arcanine @ Rowap Berry
 Ability: Any
 319 HP / 194 SpD / 280 Spe
-- Snarl 
+- Snarl
 
 4 - Escavalier @ Focus Sash
 Ability: Swarm
@@ -61,12 +61,12 @@ Ability: Swarm
 - Bug Bite
 
 5 - Dusclops @ Flame Orb
-Ability: Pressure 
+Ability: Pressure
 232 HP / 293 Def / 86- Spe
-- Fling 
+- Fling
 
-6 - Slowbro @ Rocky Helmet 
-Ability: Own Tempo 
+6 - Slowbro @ Rocky Helmet
+Ability: Own Tempo
 394 HP / 350 Def / 234+ SpA / 194+ SpD / 58-64 Spe
 
 
@@ -75,16 +75,16 @@ Ability: Own Tempo
 [P3]
 
 1 - Krookodile @ Poison Barb
-Ability: Intimidate 
-366 Atk / 283 Spe 
-- Fling 
+Ability: Intimidate
+366 Atk / 283 Spe
+- Fling
 
-2 - Scolipede @ Choice Band 
+2 - Scolipede @ Choice Band
 Ability: Any
 270-275 HP / 328 Atk / 183-188 SpD / 284 Spe
 - Megahorn
 
-3 - Volcarona @ Choice Specs 
+3 - Volcarona @ Choice Specs
 Ability: Flame Body
 311 HP / 405 SpA / 261+ SpD / 281 Spe
 - Bug Buzz
@@ -92,26 +92,26 @@ Ability: Flame Body
 4 - Crawdaunt @ Iron Ball
 Ability: Adaptability
 372 Atk / 110-125 Spe
-- Fling 
+- Fling
 
-5 - Reuniclus @ Rocky Helmet 
-Ability: Magic Guard 
-424 HP / 257 Def / 217 SpD / 58-65 Spe 
+5 - Reuniclus @ Rocky Helmet
+Ability: Magic Guard
+424 HP / 257 Def / 217 SpD / 58-65 Spe
 - Reflect
-- Safeguard 
+- Safeguard
 
-6 - Slowbro @ Kasib Berry 
-Ability: Own Tempo 
+6 - Slowbro @ Kasib Berry
+Ability: Own Tempo
 394 HP / 350 Def / 234+ SpA / 185-190 SpD / 70-73 Spe
 - Trick Room
 - Psych Up
-- Focus Blast 
+- Focus Blast
 - Psychic
 
 
 
 
-[P4] 
+[P4]
 
 1 - Jirachi @ Covert Mantle
 Ability: Any
@@ -120,30 +120,99 @@ Ability: Any
 - Safeguard
 - Metal Sound
 
-2 - Honchkrow @ Life Orb 
+2 - Honchkrow @ Life Orb
 Ability: Super Luck
-339 HP / 383 Atk / 140 Def / 149+ SpD / 231 Spe 
-- Assurance 
+339 HP / 383 Atk / 140 Def / 149+ SpD / 231 Spe
+- Assurance
 
 3 - Escavalier @ Focus Sash
-Ability: Swarm 
+Ability: Swarm
 265 HP / 405 Atk / 230 SpD / 89-99 Spe
 - Megahorn
 
 4 - Musharna @ Jaboca Berry
-Ability: Synchronize 
+Ability: Synchronize
 436 HP / 295 Def / 226 SpD / 56-63 Spe
 - Lucky Chant
-- Gravity 
+- Gravity
 
-5 - Reuniclus @ Rocky Helmet 
+5 - Reuniclus @ Rocky Helmet
 Ability: Overcoat
 424 HP / 273 Def / 206 SpD / 58 Spe
 - Charm
 
 6 - Slowbro @ Iapapa Berry
 Ability: Own Tempo
-391 HP / 350 Def / 234+ SpA / 200 SpD / 74-87 Spe 
-- Psych Up 
+391 HP / 350 Def / 234+ SpA / 200 SpD / 74-87 Spe
+- Psych Up
 - Psychic
 - Focus Blast
+
+[Moves]
+
+Turn 1
+P1 - Raichu Lucky Chant
+P2 - Mr. Mime Trick Ad
+P3 - Krookodile Fling
+P4 - Jirachi Gravity
+
+Turn 2
+P1 - Heracross Megahorn
+P2 - Krookodile Assurance
+P3 - Scolipede Megahorn
+P4 - Jirachi Safeguard
+
+Turn 3
+P1 - Suicune Snarl
+P2 - Arcanine Snarl
+P3 - Volcarona Bug Buzz
+P4 - Jirachi Metal Sound
+
+Turn 4
+P1 - Suicune Quash
+P2 - Escavalier Megahorn
+P3 - Volcarona Bug Buzz
+P4 - Honchkrow Assurance
+
+Turn 5
+P1 - Crawdaunt Fling
+P2 - Escavalier Bug Bite
+P3 - Crawdaunt Fling
+P4 - Escavalier Megahorn
+
+Turn 6
+P1 - Slowbro Psych Up
+P2 - Dusclops Fling
+P3 - Reuniclus Reflect
+P4 - Musharna Lucky Chant
+
+Turn 7
+P1 - Slowbro Psychic
+P2 - Slowbro Psych Up
+P3 - Reuniclus Safeguard
+P4 - Musharna Gravity
+
+Turn 8
+P1 - Slowbro Psychic
+P2 - Slowbro Focus Blast
+P3 - Slowbro Trick Room
+P4 - Reuniclus Charm
+
+Turn 9
+P1 - Slowbro Iron Defense
+P2 - Slowbro Focus Blast
+P3 - Slowbro Psych Up P2
+P4 - Slowbro Psych Up P3
+
+Turn 10
+P1 - Slowbro Slack Off
+P2 - Slowbro Psych Up P3
+P3 - Slowbro Psychic
+P4 - Slowbro Focus Blast
+
+Turn 11
+P1 - Conkeldurr Close Combat
+P2 - Slowbro Psychic
+P3 - Slowbro Focus Blast
+P4 - Slowbro Psychic
+

@@ -1,0 +1,67 @@
+[Moves]
+
+Turn 1
+P1 - Hippowdon Captivate
+P2 - Weavile Fling
+P3 - Breloom Safeguard
+P4 - Xatu Lucky Chant
+
+Turn 2
+P1 - Hippowdon Any
+P2 - Bisharp Sucker Punch
+P3 - Bisharp Sucker Punch
+P4 - Bisharp Sucker Punch
+
+Turn 3
+P1 - Whimsicott Light Screen
+P2 - Bisharp Sucker Punch
+P3 - Bisharp Sucker Punch
+P4 - Bisharp Sucker Punch
+
+Turn 4
+P1 - Durant X-Scissor
+P2 - Sharpedo Assurance
+P3 - Crobat Acid Spray
+P4 - Gengar Hex
+
+Turn 5
+P1 - Braviary Assurance
+P2 - Braviary Assurance
+P3 - Gothitelle Shadow Ball
+P4 - Gothitelle Shadow Ball
+
+Turn 6
+P1 - Milotic Safeguard
+P2 - Milotic Brine
+P3 - Crawdaunt Fling
+P4 - Jynx Lucky Chant
+
+Turn 7
+P1 - Milotic Mud Sport
+P2 - Milotic Brine
+P3 - Tyranitar Captivate
+P4 - Krookodile Assurance
+
+Turn 8
+P1 - Milotic Brine
+P2 - Milotic Brine
+P3 - Tyranitar Assurance
+P4 - Krookodile Assurance
+
+Turn 9
+P1 - Empoleon Mist
+P2 - Empoleon Brine
+P3 - Tyranitar Captivate
+P4 - Krookodile Assurance
+
+Turn 10
+P1 - Empoleon Roost
+P2 - Empoleon Brine
+P3 - Tyranitar Leer
+P4 - Krookodile Assurance
+
+Turn 11
+P1 - Empoleon Brine
+P2 - Empoleon Brine
+P3 - Tyranitar Assurance
+P4 - Krookodile Assurance
