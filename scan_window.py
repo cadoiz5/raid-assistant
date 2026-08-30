@@ -599,10 +599,8 @@ def check_slot(slot, block):
 
     base = BASE_STATS.get(want)
     mult = _mult_fn(scan.get("nature"))
-    legendary = _norm(want) in NO_BREED
     projected = steps is not None or (scan.get("level") not in (100, None))
     eff = _project_stats(want, scan) if projected else scan["stats"]
-    reroll = "re-roll" if legendary else "breed"
 
     # does the mon, as it stands, already satisfy every stat bound?
     stats_pass = bool(bounds) and bool(eff) and all(
@@ -654,11 +652,10 @@ def check_slot(slot, block):
         if bad:
             parts = [f"{s} {_fmt_bound(*w)}" if w else f"{s} impossible"
                      for s, w in bad.items()]
-            c_iv = _chk("IVs", "fail", f"{reroll} for IV: " + ", ".join(parts))
+            c_iv = _chk("IVs", "fail", "need " + ", ".join(parts))
         elif over:
             parts = [f"{s} {v}+" if v < 31 else f"{s} 31" for s, v in over.items()]
-            c_iv = _chk("IVs", "fail", f"{reroll} for IV: " + ", ".join(parts)
-                        + " — too low to EV-train within the 510 cap")
+            c_iv = _chk("IVs", "fail", "need " + ", ".join(parts))
         else:
             c_iv = _chk("IVs", "pass", ivs_of())
 
