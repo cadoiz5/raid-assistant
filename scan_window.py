@@ -310,9 +310,9 @@ def _exact_stat(base, iv, ev, sign):
 
 
 def _scan_consistency(scan):
-    """Recompute each final stat from the scanned base / IV / EV / nature and
-    report the stats that disagree - i.e. the OCR mangled a number (or the paste
-    was hand-edited wrong). Returns a one-line message or None.
+    """Recompute each final stat from the scanned base / IV / EV / nature; if any
+    disagree the OCR mangled a number (or the paste was hand-edited wrong).
+    Returns "Final stats don't match EVs/IVs/Nature" or None.
 
     Only the stats the scan actually read an IV *and* a final value for are
     checked; a missing EV counts as 0. Skipped unless the mon is level 100 (the
@@ -323,15 +323,13 @@ def _scan_consistency(scan):
         return None
     plus, minus = nat
     stats, ivs, evs = scan.get("stats") or {}, scan.get("ivs") or {}, scan.get("evs") or {}
-    bad = []
     for i, s in enumerate(STATS):
         if s not in stats or s not in ivs:
             continue
         sign = None if i == 0 else 1 if i == plus else -1 if i == minus else 0
-        want = _exact_stat(base[i], ivs[s], evs.get(s, 0), sign)
-        if want != stats[s]:
-            bad.append(f"{s} reads {stats[s]}, computes to {want}")
-    return "scanned stats don't match the IVs/EVs/nature — " + "; ".join(bad) if bad else None
+        if _exact_stat(base[i], ivs[s], evs.get(s, 0), sign) != stats[s]:
+            return "Final stats don't match EVs/IVs/Nature"
+    return None
 
 
 def _ev_window(base, iv, mult, lo, hi):
@@ -859,21 +857,16 @@ class ScanWindow:
             return
         r = check_slot(slot, self.scans[num])
         if not r["species_ok"]:
-            msg = f"✗  wrong Pokémon — {r['species_msg']}"
-            if r["warn"]:
-                msg += "        ⚠  " + r["warn"]
-            self.banner.config(text=msg, foreground=theme.FAIL)
+            self.banner.config(text=f"✗  wrong Pokémon — {r['species_msg']}",
+                               foreground=theme.FAIL)
             return
 
         if r["warn"]:
-            iid = self.tree.insert("", "end", tags=("fail",), values=(
-                r["warn"] if len(r["warn"]) <= 62 else r["warn"][:59] + "…",),
-                text="  ⚠ Scan data")
+            iid = self.tree.insert("", "end", tags=("fail",),
+                                   values=(r["warn"],), text="  ⚠ Scan data")
             self._notes[iid] = r["warn"]
 
         extra = []
-        if r["warn"]:
-            extra.append("⚠ inconsistent scan data — see below")
         missing = [c["label"] for c in r["breed"] + r["training"]
                    if c["status"] == "missing"]
         if missing:
