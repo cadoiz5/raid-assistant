@@ -1035,8 +1035,7 @@ class ScanWindow:
 
         self.banner.config(text="not scanned — breed for:", foreground=theme.FG_DIM)
         gid = self.tree.insert("", "end", open=True, tags=("group",),
-                               text="Target spread" + (" (HA)" if is_ha else ""),
-                               values=("",))
+                               text="Target breed", values=("",))
         if not rec:
             self.tree.insert(gid, "end", tags=("na",), text="  IVs",
                              values=("base stats unknown",))
@@ -1048,6 +1047,9 @@ class ScanWindow:
             return
         self.tree.insert(gid, "end", text="  IVs", values=(rec["ivs"],))
         self.tree.insert(gid, "end", text="  Nature", values=(rec["natures"],))
+        self.tree.insert(gid, "end", text="  Hidden ability",
+                         tags=() if is_ha else ("na",),
+                         values=("required" if is_ha else "not needed",))
         egg = EGG_MOVES.get(_norm(slot["species"]), set())
         req_egg = [m for m in slot["moves"] if _norm(m) in egg]
         if req_egg:
