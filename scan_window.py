@@ -296,38 +296,41 @@ def _project_stats(species, scan):
             for i, s in enumerate(STATS)}
 
 
-def _exact_stat(base, iv, ev, sign):
-    """PokeMMO level-100 stat by the exact integer formula. `sign`: None for HP,
-    +1 for the nature-boosted stat, -1 for the hindered one, 0 otherwise."""
-    core = 2 * base + iv + ev // 4
+def _exact_stat(base, iv, ev, sign, level=100):
+    """PokeMMO stat by the exact integer formula. `sign`: None for HP, +1 for the
+    nature-boosted stat, -1 for the hindered one, 0 otherwise. `level` defaults
+    to 100 (where it collapses to core + 110 / (core + 5) * mult)."""
+    scaled = (2 * base + iv + ev // 4) * level // 100
     if sign is None:
-        return core + 110
+        return scaled + level + 10
+    val = scaled + 5
     if sign > 0:
-        return (core + 5) * 11 // 10
+        return val * 11 // 10
     if sign < 0:
-        return (core + 5) * 9 // 10
-    return core + 5
+        return val * 9 // 10
+    return val
 
 
 def _scan_consistency(scan):
-    """Recompute each final stat from the scanned base / IV / EV / nature; if any
-    disagree the OCR mangled a number (or the paste was hand-edited wrong).
-    Returns "Final stats don't match EVs/IVs/Nature" or None.
+    """Recompute each shown stat from the scanned base / IV / EV / nature at the
+    scanned level; if any disagree the OCR mangled a number (or the paste was
+    hand-edited wrong). Returns "Final stats don't match EVs/IVs/Nature" or None.
 
-    Only the stats the scan actually read an IV *and* a final value for are
-    checked; a missing EV counts as 0. Skipped unless the mon is level 100 (the
-    formula's level) and the nature is recognised."""
+    Only the stats the scan actually read an IV *and* a value for are checked;
+    a missing EV counts as 0. Needs a recognised nature. Works at any level -
+    the mon doesn't have to be 100."""
     base = BASE_STATS.get(scan.get("species"))
     nat = NATURES.get((scan.get("nature") or "").lower())
-    if not base or nat is None or scan.get("level") not in (None, 100):
+    if not base or nat is None:
         return None
     plus, minus = nat
+    level = scan.get("level") or 100
     stats, ivs, evs = scan.get("stats") or {}, scan.get("ivs") or {}, scan.get("evs") or {}
     for i, s in enumerate(STATS):
         if s not in stats or s not in ivs:
             continue
         sign = None if i == 0 else 1 if i == plus else -1 if i == minus else 0
-        if _exact_stat(base[i], ivs[s], evs.get(s, 0), sign) != stats[s]:
+        if _exact_stat(base[i], ivs[s], evs.get(s, 0), sign, level) != stats[s]:
             return "Final stats don't match EVs/IVs/Nature"
     return None
 
@@ -343,21 +346,22 @@ def _stat_signs(nature):
 
 
 def recompute_stats(scan):
-    """The final stats implied by the scanned base / IV / EV / nature. A stat
-    whose IV wasn't read is left at its scanned value (can't recompute it);
-    only if that's missing too is it computed at IV 31. -> {stat: value} or
-    None if base stats / nature are unknown."""
+    """The stats implied by the scanned base / IV / EV / nature at the scanned
+    level. A stat whose IV wasn't read is left at its scanned value (can't
+    recompute it); only if that's missing too is it computed at IV 31.
+    -> {stat: value} or None if base stats / nature are unknown."""
     base = BASE_STATS.get(scan.get("species"))
     signs = _stat_signs(scan.get("nature"))
     if not base or signs is None:
         return None
+    level = scan.get("level") or 100
     stats, ivs, evs = scan.get("stats") or {}, scan.get("ivs") or {}, scan.get("evs") or {}
     out = {}
     for i, s in enumerate(STATS):
         if s in ivs:
-            out[s] = _exact_stat(base[i], ivs[s], evs.get(s, 0), signs[i])
+            out[s] = _exact_stat(base[i], ivs[s], evs.get(s, 0), signs[i], level)
         else:
-            out[s] = stats.get(s, _exact_stat(base[i], 31, evs.get(s, 0), signs[i]))
+            out[s] = stats.get(s, _exact_stat(base[i], 31, evs.get(s, 0), signs[i], level))
     return out
 
 
@@ -370,16 +374,17 @@ def solve_evs_for_stats(scan):
     signs = _stat_signs(scan.get("nature"))
     if not base or signs is None:
         return None
+    level = scan.get("level") or 100
     stats, ivs = scan.get("stats") or {}, scan.get("ivs") or {}
     out = dict.fromkeys(STATS, 0)
     out.update({s: v for s, v in (scan.get("evs") or {}).items() if s in out})
     for i, s in enumerate(STATS):
         if s not in stats or s not in ivs:
             continue
-        if _exact_stat(base[i], ivs[s], out[s], signs[i]) == stats[s]:
+        if _exact_stat(base[i], ivs[s], out[s], signs[i], level) == stats[s]:
             continue                       # this stat already lines up - leave it
         hit = next((ev for ev in range(0, 253, 4)
-                    if _exact_stat(base[i], ivs[s], ev, signs[i]) == stats[s]), None)
+                    if _exact_stat(base[i], ivs[s], ev, signs[i], level) == stats[s]), None)
         if hit is None:
             return None
         out[s] = hit
