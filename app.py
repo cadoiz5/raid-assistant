@@ -119,8 +119,8 @@ class App:
                                 font=("TkDefaultFont", 10, "bold"))
         self.header.pack(side="left")
 
-        self.gear = ttk.Menubutton(self.topbar, text="⚙", takefocus=False,
-                                   style="Gear.TMenubutton")
+        self.gear = ttk.Button(self.topbar, text="⚙", takefocus=False, width=2,
+                               style="Gear.TButton", command=self._open_menu)
         self.gear.pack(side="right")
         Tooltip(self.gear, "Menu")
 
@@ -137,8 +137,12 @@ class App:
         self._update_idx = m.index("end")
 
         self.gear_menu = m
-        self.gear["menu"] = m
         self._refresh_change_menu()
+
+    def _open_menu(self):
+        x = self.gear.winfo_rootx()
+        y = self.gear.winfo_rooty() + self.gear.winfo_height()
+        self.gear_menu.tk_popup(x, y)
 
     # ---------------- self-update ----------------
     def _start_update_check(self):
