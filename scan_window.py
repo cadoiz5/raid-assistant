@@ -296,6 +296,44 @@ def _project_stats(species, scan):
             for i, s in enumerate(STATS)}
 
 
+def _exact_stat(base, iv, ev, sign):
+    """PokeMMO level-100 stat by the exact integer formula. `sign`: None for HP,
+    +1 for the nature-boosted stat, -1 for the hindered one, 0 otherwise."""
+    core = 2 * base + iv + ev // 4
+    if sign is None:
+        return core + 110
+    if sign > 0:
+        return (core + 5) * 11 // 10
+    if sign < 0:
+        return (core + 5) * 9 // 10
+    return core + 5
+
+
+def _scan_consistency(scan):
+    """Recompute each final stat from the scanned base / IV / EV / nature and
+    report the stats that disagree - i.e. the OCR mangled a number (or the paste
+    was hand-edited wrong). Returns a one-line message or None.
+
+    Only the stats the scan actually read an IV *and* a final value for are
+    checked; a missing EV counts as 0. Skipped unless the mon is level 100 (the
+    formula's level) and the nature is recognised."""
+    base = BASE_STATS.get(scan.get("species"))
+    nat = NATURES.get((scan.get("nature") or "").lower())
+    if not base or nat is None or scan.get("level") not in (None, 100):
+        return None
+    plus, minus = nat
+    stats, ivs, evs = scan.get("stats") or {}, scan.get("ivs") or {}, scan.get("evs") or {}
+    bad = []
+    for i, s in enumerate(STATS):
+        if s not in stats or s not in ivs:
+            continue
+        sign = None if i == 0 else 1 if i == plus else -1 if i == minus else 0
+        want = _exact_stat(base[i], ivs[s], evs.get(s, 0), sign)
+        if want != stats[s]:
+            bad.append(f"{s} reads {stats[s]}, computes to {want}")
+    return "scanned stats don't match the IVs/EVs/nature — " + "; ".join(bad) if bad else None
+
+
 def _ev_window(base, iv, mult, lo, hi):
     """Smallest / largest EV (snapped to multiples of 4) whose final stat is in
     [lo, hi]. None if no EV 0..252 works."""
@@ -453,7 +491,8 @@ def check_slot(slot, block):
     want = slot["species"]
     bounds, req_moves = slot["bounds"], slot["moves"]
     r = {"scan": scan, "want": want, "species_ok": True, "species_msg": "",
-         "evolve": None, "breed": [], "training": []}
+         "evolve": None, "warn": _scan_consistency(scan),
+         "breed": [], "training": []}
 
     steps = None
     if _norm(scan["species"]) != _norm(want):
@@ -610,7 +649,7 @@ def slot_ok(slot, block):
     """True when every applicable check passes (grid / list roll-up).
     A 'missing' check counts as not-ok - can't confirm what didn't scan."""
     r = check_slot(slot, block)
-    if not r["species_ok"]:
+    if not r["species_ok"] or r["warn"]:
         return False
     return all(c["status"] not in ("fail", "missing")
                for c in r["breed"] + r["training"])
@@ -621,8 +660,11 @@ def validate(slot, block):
     r = check_slot(slot, block)
     if not r["species_ok"]:
         return [f"species: {r['species_msg']}"]
-    return [f"{c['label']}: {c['note']}" for c in r["breed"] + r["training"]
-            if c["status"] in ("fail", "missing")]
+    out = [f"{c['label']}: {c['note']}" for c in r["breed"] + r["training"]
+           if c["status"] in ("fail", "missing")]
+    if r["warn"]:
+        out.insert(0, r["warn"])
+    return out
 
 
 def evaluate_position(raid, position, scan_path):
@@ -817,11 +859,21 @@ class ScanWindow:
             return
         r = check_slot(slot, self.scans[num])
         if not r["species_ok"]:
-            self.banner.config(text=f"✗  wrong Pokémon — {r['species_msg']}",
-                               foreground=theme.FAIL)
+            msg = f"✗  wrong Pokémon — {r['species_msg']}"
+            if r["warn"]:
+                msg += "        ⚠  " + r["warn"]
+            self.banner.config(text=msg, foreground=theme.FAIL)
             return
 
+        if r["warn"]:
+            iid = self.tree.insert("", "end", tags=("fail",), values=(
+                r["warn"] if len(r["warn"]) <= 62 else r["warn"][:59] + "…",),
+                text="  ⚠ Scan data")
+            self._notes[iid] = r["warn"]
+
         extra = []
+        if r["warn"]:
+            extra.append("⚠ inconsistent scan data — see below")
         missing = [c["label"] for c in r["breed"] + r["training"]
                    if c["status"] == "missing"]
         if missing:
@@ -829,8 +881,9 @@ class ScanWindow:
         ok = slot_ok(slot, self.scans[num])
         self.banner.config(
             text="      ".join([("✓ all checks pass" if ok else "✗ needs work")] + extra),
-            foreground=theme.PASS if ok else (theme.MISSING if missing and not any(
-                c["status"] == "fail" for c in r["breed"] + r["training"]) else theme.FAIL))
+            foreground=theme.PASS if ok else (theme.MISSING if missing and not r["warn"]
+                and not any(c["status"] == "fail" for c in r["breed"] + r["training"])
+                else theme.FAIL))
 
         for group, checks in (("Breed", r["breed"]), ("Training", r["training"])):
             gid = self.tree.insert("", "end", open=True, tags=("group",),
