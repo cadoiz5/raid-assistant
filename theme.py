@@ -70,6 +70,12 @@ def apply(root):
               foreground=[("disabled", FG_DIM)],
               indicatorcolor=[("selected", ACCENT_HI), ("!selected", FIELD)])
 
+    style.configure("TMenubutton", background=BG, foreground=FG,
+                    arrowcolor=FG, bordercolor=BORDER, padding=(6, 2))
+    style.map("TMenubutton", background=[("active", BG_ALT)],
+              foreground=[("disabled", FG_DIM)])
+    style.configure("Gear.TMenubutton", font=("TkDefaultFont", 12))
+
     style.configure("TEntry", fieldbackground=FIELD, foreground=FG,
                     bordercolor=BORDER, insertcolor=FG)
 

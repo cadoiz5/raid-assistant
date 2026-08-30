@@ -12,9 +12,10 @@ Main view is a coverage grid:
               – nothing, ! partial, ✗ a scan fails its strat, ✓ all 6 valid.
               Click it to open the scan window (scan_window.py).
 
-Menu:
-    Character   New / Change ▸ (list) / Delete
-    Team        New   (next iteration)
+Gear button (top right) drops the whole menu:
+    New / Change ▸ (list) / Delete Character
+    New Team   (next iteration)
+    Check for Updates   ("↑ Update available" when origin/main is ahead)
 
 Startup: 0 characters -> "create one" screen; exactly 1 -> load it; more than
 one -> pick from a dropdown on the start screen.
@@ -100,38 +101,43 @@ class App:
         root.geometry("470x330")
         root.minsize(400, 280)
 
-        self._build_menu()
+        self._build_topbar()
         self._build_start()
         self._build_grid()
         self._boot()
         self._start_update_check()
 
-    # ---------------- menu ----------------
-    def _build_menu(self):
-        menubar = tk.Menu(self.root)
+    # ---------------- gear menu ----------------
+    def _build_topbar(self):
+        """A thin strip with a gear button, top-right, that drops the whole
+        menu. Replaces the OS menu bar (which can't be themed on Windows)."""
+        self.topbar = ttk.Frame(self.root)
+        self.topbar.pack(side="top", fill="x")
 
-        self.character_menu = tk.Menu(menubar, tearoff=0)
-        self.character_menu.add_command(label="New", command=self.character_new)
-        self.change_menu = tk.Menu(self.character_menu, tearoff=0)
-        self.character_menu.add_cascade(label="Change", menu=self.change_menu)
-        self.character_menu.add_command(label="Delete", command=self.character_delete)
-        menubar.add_cascade(label="Character", menu=self.character_menu)
+        self.gear = ttk.Menubutton(self.topbar, text="⚙", takefocus=False,
+                                   style="Gear.TMenubutton")
+        self.gear.pack(side="right", padx=6, pady=4)
+        Tooltip(self.gear, "Menu")
 
-        team = tk.Menu(menubar, tearoff=0)
-        team.add_command(label="New", command=self.team_new)
-        menubar.add_cascade(label="Team", menu=team)
-
-        self._menubar = menubar
+        m = tk.Menu(self.gear, tearoff=0)
+        m.add_command(label="New Character", command=self.character_new)
+        self.change_menu = tk.Menu(m, tearoff=0)
+        m.add_cascade(label="Change Character", menu=self.change_menu)
+        m.add_command(label="Delete Character", command=self.character_delete)
+        m.add_separator()
+        m.add_command(label="New Team", command=self.team_new)
+        m.add_separator()
         self._update_label = "Check for Updates"
-        menubar.add_command(label=self._update_label, command=self.check_updates)
-        self._update_idx = menubar.index("end")
+        m.add_command(label=self._update_label, command=self.check_updates)
+        self._update_idx = m.index("end")
 
-        self.root.config(menu=menubar)
+        self.gear_menu = m
+        self.gear["menu"] = m
         self._refresh_change_menu()
 
     # ---------------- self-update ----------------
     def _start_update_check(self):
-        """Background: see if origin/main is ahead, and if so flag the menu."""
+        """Background: see if origin/main is ahead, and if so flag the gear."""
         if not updater.available():
             return
 
@@ -146,8 +152,9 @@ class App:
     def _flag_update(self):
         info = getattr(self, "_pending_update", None)
         if info:
-            self._menubar.entryconfigure(
+            self.gear_menu.entryconfigure(
                 self._update_idx, label=f"↑ Update available ({info['behind']})")
+            self.gear.configure(text="⚙ •")
 
     def check_updates(self):
         if not updater.available():
@@ -176,7 +183,8 @@ class App:
         ok, out = updater.update()
         if ok:
             self._pending_update = None
-            self._menubar.entryconfigure(self._update_idx, label=self._update_label)
+            self.gear_menu.entryconfigure(self._update_idx, label=self._update_label)
+            self.gear.configure(text="⚙")
             messagebox.showinfo("Updates", "Updated. Restart the app to load the new version.")
         else:
             messagebox.showerror("Updates", f"Update failed:\n\n{out}")
@@ -187,7 +195,7 @@ class App:
         for c in chars:
             self.change_menu.add_command(label=c, command=lambda c=c: self._load(c))
         state = "normal" if chars else "disabled"
-        self.character_menu.entryconfigure("Change", state=state)
+        self.gear_menu.entryconfigure("Change Character", state=state)
 
     # ---------------- views ----------------
     def _build_start(self):
