@@ -28,6 +28,8 @@ import sys
 import tkinter as tk
 from tkinter import ttk, filedialog
 
+import theme
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 SCRIPT = os.path.join(HERE, "screenshot.py")
 STRATS = os.path.join(HERE, "strats")
@@ -675,9 +677,9 @@ class ScanWindow:
             cb.pack(side="right")
             cb.bind("<<ComboboxSelected>>", self._change_strat)
         elif self.strat:
-            ttk.Label(top, text=f"strat: {self.strat}", foreground="#888").pack(side="right")
+            ttk.Label(top, text=f"strat: {self.strat}", foreground=theme.FG_DIM).pack(side="right")
         else:
-            ttk.Label(top, text="no strat defined", foreground="#a00").pack(side="right")
+            ttk.Label(top, text="no strat defined", foreground=theme.FAIL).pack(side="right")
 
         body = ttk.Frame(frame)
         body.pack(fill="both", expand=True, pady=(8, 0))
@@ -692,9 +694,9 @@ class ScanWindow:
         self.listbox.bind("<<ListboxSelect>>", self._select)
         ttk.Button(left, text="Set region", command=self.set_region).pack(anchor="w")
         ttk.Label(left, text="○ not scanned   ✓ valid   ✗ invalid",
-                  foreground="#888", font=("TkDefaultFont", 8)).pack(anchor="w", pady=(6, 0))
+                  foreground=theme.FG_DIM, font=("TkDefaultFont", 8)).pack(anchor="w", pady=(6, 0))
         ttk.Label(left, text="✓ pass   ✗ fix   – n/a   ⋯ blocked   ? missing",
-                  foreground="#888", font=("TkDefaultFont", 8)).pack(anchor="w")
+                  foreground=theme.FG_DIM, font=("TkDefaultFont", 8)).pack(anchor="w")
 
         ttk.Separator(body, orient="vertical").pack(side="left", fill="y", padx=10)
 
@@ -702,10 +704,10 @@ class ScanWindow:
         right = ttk.Frame(body)
         right.pack(side="left", fill="both", expand=True)
 
-        self.target_lbl = ttk.Label(right, text="select a slot →", foreground="#666",
+        self.target_lbl = ttk.Label(right, text="select a slot →", foreground=theme.FG_DIM,
                                     font=("Consolas", 9), justify="left")
         self.target_lbl.pack(anchor="w")
-        self.banner = ttk.Label(right, text="", foreground="#888",
+        self.banner = ttk.Label(right, text="", foreground=theme.FG_DIM,
                                 font=("TkDefaultFont", 9), justify="left")
         self.banner.pack(anchor="w", pady=(2, 2))
 
@@ -713,11 +715,11 @@ class ScanWindow:
                                  selectmode="none")
         self.tree.column("#0", width=150, stretch=False, anchor="w")
         self.tree.column("v", width=360, anchor="w")
-        self.tree.tag_configure("pass", foreground="#0a0")
-        self.tree.tag_configure("fail", foreground="#c00")
-        self.tree.tag_configure("na", foreground="#999")
-        self.tree.tag_configure("blocked", foreground="#c80")
-        self.tree.tag_configure("missing", foreground="#9c27b0")
+        self.tree.tag_configure("pass", foreground=theme.PASS)
+        self.tree.tag_configure("fail", foreground=theme.FAIL)
+        self.tree.tag_configure("na", foreground=theme.NA)
+        self.tree.tag_configure("blocked", foreground=theme.BLOCKED)
+        self.tree.tag_configure("missing", foreground=theme.MISSING)
         self.tree.tag_configure("group", font=("TkDefaultFont", 9, "bold"))
         self.tree.pack(fill="x", pady=(0, 6))
         self.tree.bind("<Button-1>", self._tree_click)
@@ -730,7 +732,7 @@ class ScanWindow:
         self.save_btn = ttk.Button(bar, text="Save edits", command=self.save,
                                    state="disabled")
         self.save_btn.pack(side="left", padx=6)
-        self.region_lbl = ttk.Label(bar, text=self._region_text(), foreground="#888")
+        self.region_lbl = ttk.Label(bar, text=self._region_text(), foreground=theme.FG_DIM)
         self.region_lbl.pack(side="right")
 
         self.text = tk.Text(right, font=("Consolas", 10), wrap="none", height=7,
@@ -739,7 +741,7 @@ class ScanWindow:
         self._baseline = ""  # text-box content that matches disk
         self.text.bind("<<Modified>>", self._on_text_change)
 
-        self.status = ttk.Label(frame, text="", foreground="#888")
+        self.status = ttk.Label(frame, text="", foreground=theme.FG_DIM)
         self.status.pack(fill="x", pady=(6, 0))
 
         win.bind("<Escape>", lambda e: win.destroy())
@@ -816,7 +818,7 @@ class ScanWindow:
         r = check_slot(slot, self.scans[num])
         if not r["species_ok"]:
             self.banner.config(text=f"✗  wrong Pokémon — {r['species_msg']}",
-                               foreground="#c00")
+                               foreground=theme.FAIL)
             return
 
         extra = []
@@ -827,8 +829,8 @@ class ScanWindow:
         ok = slot_ok(slot, self.scans[num])
         self.banner.config(
             text="      ".join([("✓ all checks pass" if ok else "✗ needs work")] + extra),
-            foreground="#0a0" if ok else ("#9c27b0" if missing and not any(
-                c["status"] == "fail" for c in r["breed"] + r["training"]) else "#c00"))
+            foreground=theme.PASS if ok else (theme.MISSING if missing and not any(
+                c["status"] == "fail" for c in r["breed"] + r["training"]) else theme.FAIL))
 
         for group, checks in (("Breed", r["breed"]), ("Training", r["training"])):
             gid = self.tree.insert("", "end", open=True, tags=("group",),
@@ -846,9 +848,9 @@ class ScanWindow:
         from breed_calc import recommend, fmt_ivs, fmt_evs  # avoids import cycle
         rec = recommend(slot["species"], slot["bounds"])
         if not rec:
-            self.banner.config(text="not scanned yet", foreground="#888")
+            self.banner.config(text="not scanned yet", foreground=theme.FG_DIM)
             return
-        self.banner.config(text="not scanned — breed for:", foreground="#888")
+        self.banner.config(text="not scanned — breed for:", foreground=theme.FG_DIM)
         gid = self.tree.insert("", "end", open=True, tags=("group",),
                                text="Target spread", values=("",))
         rows = [("Nature", f"{rec['nature']}  ({rec['nature_effect']})"),

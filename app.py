@@ -28,6 +28,7 @@ import shutil
 import tkinter as tk
 from tkinter import ttk, simpledialog, messagebox
 
+import theme
 from prefs import Prefs
 from scan_window import ScanWindow, evaluate_position
 from moves_window import MovesWindow
@@ -74,8 +75,9 @@ class Tooltip:
         self.tip = tk.Toplevel(self.widget)
         self.tip.wm_overrideredirect(True)
         self.tip.wm_geometry(f"+{x}+{y}")
-        tk.Label(self.tip, text=self.text, background="#ffffe0", relief="solid",
-                 borderwidth=1, padx=6, pady=2, font=("TkDefaultFont", 9)).pack()
+        tk.Label(self.tip, text=self.text, background=theme.TOOLTIP_BG,
+                 foreground=theme.FG, relief="solid", borderwidth=1,
+                 padx=6, pady=2, font=("TkDefaultFont", 9)).pack()
 
     def _hide(self, _=None):
         self._cancel()
@@ -259,5 +261,6 @@ class App:
 
 if __name__ == "__main__":
     root = tk.Tk()
+    theme.apply(root)
     App(root)
     root.mainloop()
