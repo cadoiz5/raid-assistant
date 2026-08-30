@@ -861,12 +861,9 @@ class ScanWindow:
                                foreground=theme.FAIL)
             return
 
-        if r["warn"]:
-            iid = self.tree.insert("", "end", tags=("fail",),
-                                   values=(r["warn"],), text="  ⚠ Scan data")
-            self._notes[iid] = r["warn"]
-
         extra = []
+        if r["warn"]:
+            extra.append("⚠ " + r["warn"])
         missing = [c["label"] for c in r["breed"] + r["training"]
                    if c["status"] == "missing"]
         if missing:
