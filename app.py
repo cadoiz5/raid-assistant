@@ -119,9 +119,9 @@ class App:
                                 font=("TkDefaultFont", 10, "bold"))
         self.header.pack(side="left")
 
-        self.gear = ttk.Button(self.topbar, text="⚙", takefocus=False, width=2,
+        self.gear = ttk.Button(self.topbar, text="⚙", takefocus=False, width=3,
                                style="Gear.TButton", command=self._open_menu)
-        self.gear.pack(side="right")
+        self.gear.pack(side="right", padx=(0, 2))
         Tooltip(self.gear, "Menu")
 
         m = tk.Menu(self.gear, tearoff=0)

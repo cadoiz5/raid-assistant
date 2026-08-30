@@ -73,7 +73,7 @@ def apply(root):
     # compact gear button (a plain button that pops the menu itself)
     style.configure("Gear.TButton", background=BG_ALT, foreground=FG,
                     bordercolor=BORDER, focuscolor=BG_ALT, relief="flat",
-                    font=("TkDefaultFont", 12), padding=(4, 0))
+                    anchor="center", font=("TkDefaultFont", 12), padding=(7, 2))
     style.map("Gear.TButton",
               background=[("pressed", ACCENT), ("active", ACCENT_HI)],
               foreground=[("disabled", FG_DIM)])
