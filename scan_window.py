@@ -397,6 +397,42 @@ def _ev_window(base, iv, mult, lo, hi):
     return (ev_lo, ev_hi) if ev_lo <= ev_hi else (feas[0], feas[-1])
 
 
+def _iv_budget_targets(base, mult, bounds, ivs):
+    """When each bound is individually reachable but the scanned IVs jointly
+    force more than 510 EV, raise IVs (toward 31, greediest EV-saving first)
+    until the total fits. -> {stat: needed_iv} for the stats that had to go up,
+    {} if the scanned IVs already fit, or None if even 31s across the board
+    don't fit (that's the nature's problem, not the IVs')."""
+    idx = {s: STATS.index(s) for s in bounds}
+
+    def total(cur):
+        t = 0
+        for s, (lo, hi) in bounds.items():
+            w = _ev_window(base[idx[s]], cur[s], mult(idx[s]), lo, hi)
+            if w is None:
+                return None
+            t += w[0]
+        return t
+
+    cur = {s: ivs.get(s, 31) for s in bounds}
+    t = total(cur)
+    if t is None or t <= EV_CAP:
+        return {}
+    while t > EV_CAP:
+        best = None
+        for s in bounds:
+            if cur[s] >= 31:
+                continue
+            nt = total({**cur, s: cur[s] + 1})
+            if nt is not None and (best is None or t - nt > best[0]):
+                best = (t - nt, s)
+        if best is None:
+            return None
+        cur[best[1]] += 1
+        t = total(cur)
+    return {s: cur[s] for s in bounds if cur[s] > ivs.get(s, 31)}
+
+
 def suggest_evs(species, scan, bounds):
     """-> ('breed', None)          a bound can't be met by EVs (wrong nature/IV)
           ('ok', {stat: new_ev})   the EVs that should change
@@ -608,12 +644,18 @@ def check_slot(slot, block):
             i = STATS.index(stat)
             if _ev_window(base[i], ivs.get(stat, 31), mult(i), lo, hi) is None:
                 bad[stat] = _iv_window(base[i], mult(i), lo, hi)
-        if not bad:
-            c_iv = _chk("IVs", "pass", ivs_of())
-        else:
+        # every bound reachable on its own, but do the low IVs together bust 510 EV?
+        over = None if bad else _iv_budget_targets(base, mult, bounds, ivs)
+        if bad:
             parts = [f"{s} {_fmt_bound(*w)}" if w else f"{s} impossible"
                      for s, w in bad.items()]
             c_iv = _chk("IVs", "fail", f"{reroll} for IV: " + ", ".join(parts))
+        elif over:
+            parts = [f"{s} {v}+" if v < 31 else f"{s} 31" for s, v in over.items()]
+            c_iv = _chk("IVs", "fail", f"{reroll} for IV: " + ", ".join(parts)
+                        + " — too low to EV-train within the 510 cap")
+        else:
+            c_iv = _chk("IVs", "pass", ivs_of())
 
     want_ab = (slot["ability"] or "").strip()
     pinned_ab = want_ab and want_ab.lower() != "any"
