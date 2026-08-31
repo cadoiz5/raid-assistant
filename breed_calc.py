@@ -258,13 +258,11 @@ def _iv_line(solution):
     return " / ".join("%s %s" % (v, k) for k, v in parts) if parts else "any"
 
 
-def recommend(species, bounds, nature=None):
-    """-> {'ivs': str, 'natures': str} for the loosest breedable box,
-       or {'error': str}, or None when the species' base stats aren't known.
-
-    If `nature` is given and can actually reach the targets, the box is solved
-    for that nature (so the IV ranges are right for a mon you already have);
-    otherwise the box-maximising nature is picked."""
+def recommend(species, bounds):
+    """-> {'ivs': str, 'natures': str, 'natures_ok': {lowercase name, ...}} for
+    the loosest breedable box, or {'error': str}, or None when the species' base
+    stats aren't known. `natures_ok` is every nature that box still works under -
+    use it to tell whether an already-picked nature is among the best."""
     base_list = BASE_STATS.get(species)
     if not base_list:
         return None
@@ -276,20 +274,12 @@ def recommend(species, bounds, nature=None):
         if sk:
             targets[sk] = (lo, BIG if hi == float("inf") else hi)
 
-    picked = None
-    if nature:
-        nd = next((n for n in NATURE_LIST
-                   if n["name"].lower() == str(nature).lower()), None)
-        if nd:
-            try:
-                _, sol = _solve_box(bases, targets, nd)
-                picked = (nd, sol)
-            except _NoSolve:
-                picked = None
-    if picked is None:
-        picked = _pick_nature(bases, targets, NATURE_LIST)
+    picked = _pick_nature(bases, targets, NATURE_LIST)
     if picked is None:
         return {"error": "no nature reaches every target within %d EVs" % EV_TOTAL}
     _, solution = picked
     mask = _compatible_mask(bases, targets, solution, NATURE_LIST)
-    return {"ivs": _iv_line(solution), "natures": _describe_natures(NATURE_LIST, mask)}
+    ok = {NATURE_LIST[i]["name"].lower()
+          for i in range(len(NATURE_LIST)) if mask >> i & 1}
+    return {"ivs": _iv_line(solution),
+            "natures": _describe_natures(NATURE_LIST, mask), "natures_ok": ok}

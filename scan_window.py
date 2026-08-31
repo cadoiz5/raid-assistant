@@ -637,41 +637,60 @@ def check_slot(slot, block):
     ivs_of = lambda: " / ".join(f"{scan.get('ivs', {}).get(s, 31)} {s}"
                                 for s in STATS if s in bounds)
 
-    # what to breed for - same text the "Target breed" panel shows - used when a
-    # Nature / IVs check fails (the breed itself, not the EV spread, is wrong)
+    # what to breed for - same text/box the "Target breed" panel shows, used
+    # when the breed (not the EV spread) is what's wrong
     tgt = None
     if bounds and not stats_pass:
         try:
             from breed_calc import recommend
-            tgt = recommend(want, bounds, scan.get("nature"))
+            tgt = recommend(want, bounds)
         except Exception:
             tgt = None
         if tgt and tgt.get("error"):
             tgt = None
 
     # ---------- BREED ----------
-    # Nature first - the IV and EV checks lean on it.
     nature = scan.get("nature")
-    nat_ok = None
+    scanned_ivs = scan.get("ivs", {})
+
+    # can the scanned breed (this nature + these IVs) still be EV-trained onto
+    # the bounds? if not, the player must re-breed - and should use the best
+    # nature, not just fix IVs, since a fresh breed is a fresh nature anyway.
+    bad, over = {}, None
+    if bounds and base and mult is not None and not stats_pass:
+        for s, (lo, hi) in bounds.items():
+            i = STATS.index(s)
+            if _ev_window(base[i], scanned_ivs.get(s, 31), mult(i), lo, hi) is None:
+                bad[s] = _iv_window(base[i], mult(i), lo, hi)
+        over = None if bad else _iv_budget_targets(base, mult, bounds, scanned_ivs)
+    nature_cant = bool(bounds and base and mult is not None and not stats_pass
+                       and _min_total_ev(base, mult, bounds) is None)
+    breed_broken = bool(bad or over or nature_cant)
+    # is the scanned nature among the natures the recommended box works under?
+    tgt_nat_ok = bool(tgt and nature
+                      and nature.lower() in tgt.get("natures_ok", ()))
+
+    # ---- Nature ----
     if not bounds:
         c_nat = _chk("Nature", "na", "no stat bounds")
     elif not nature:
         c_nat = _chk("Nature", "missing", "missing information")
     elif stats_pass:
-        c_nat, nat_ok = _chk("Nature", "pass", nature), True
+        c_nat = _chk("Nature", "pass", nature)
     elif not base or mult is None:
         c_nat = _chk("Nature", "na", "nature not recognised")
-    elif _min_total_ev(base, mult, bounds) is not None:
-        c_nat, nat_ok = _chk("Nature", "pass", nature), True
+    elif not breed_broken or tgt_nat_ok:
+        c_nat = _chk("Nature", "pass", nature)
     elif tgt and tgt.get("natures"):
-        c_nat, nat_ok = _chk("Nature", "fail", tgt["natures"]), False
+        c_nat = _chk("Nature", "fail", tgt["natures"])
     else:
         alt = suggest_nature(want, bounds, exclude=nature)
         plus = _plus_stat(alt)
         need_nat = (f"+{plus} Nature" if plus else
                     f"{alt} Nature" if alt else "a different nature")
-        c_nat, nat_ok = _chk("Nature", "fail", f"{nature}, need {need_nat}"), False
+        c_nat = _chk("Nature", "fail", f"{nature}, need {need_nat}")
 
+    # ---- IVs ----
     if not bounds:
         c_iv = _chk("IVs", "na", "no stat bounds")
     elif stats_pass:
@@ -680,30 +699,19 @@ def check_slot(slot, block):
         c_iv = _chk("IVs", "blocked", "needs the nature")
     elif not base or mult is None:
         c_iv = _chk("IVs", "na", "nature not recognised")
-    elif nat_ok is False:
-        c_iv = (_chk("IVs", "fail", tgt["ivs"]) if tgt and tgt.get("ivs")
-                else _chk("IVs", "blocked", "fix the nature first"))
+    elif not breed_broken:
+        c_iv = _chk("IVs", "pass", ivs_of())
+    elif tgt and tgt.get("ivs"):
+        c_iv = _chk("IVs", "fail", tgt["ivs"])
+    elif bad:
+        c_iv = _chk("IVs", "fail", "need " + ", ".join(
+            f"{s} {_fmt_bound(*w)}" if w else f"{s} impossible"
+            for s, w in bad.items()))
+    elif over:
+        c_iv = _chk("IVs", "fail", "need " + ", ".join(
+            f"{s} {v}+" if v < 31 else f"{s} 31" for s, v in over.items()))
     else:
-        ivs, bad = scan.get("ivs", {}), {}
-        for stat, (lo, hi) in bounds.items():
-            i = STATS.index(stat)
-            if _ev_window(base[i], ivs.get(stat, 31), mult(i), lo, hi) is None:
-                bad[stat] = _iv_window(base[i], mult(i), lo, hi)
-        # every bound reachable on its own, but do the low IVs together bust 510 EV?
-        over = None if bad else _iv_budget_targets(base, mult, bounds, ivs)
-        if bad or over:
-            if tgt and tgt.get("ivs"):
-                note = tgt["ivs"]
-            elif bad:
-                note = "need " + ", ".join(
-                    f"{s} {_fmt_bound(*w)}" if w else f"{s} impossible"
-                    for s, w in bad.items())
-            else:
-                note = "need " + ", ".join(
-                    f"{s} {v}+" if v < 31 else f"{s} 31" for s, v in over.items())
-            c_iv = _chk("IVs", "fail", note)
-        else:
-            c_iv = _chk("IVs", "pass", ivs_of())
+        c_iv = _chk("IVs", "fail", "re-breed")
 
     want_ab = (slot["ability"] or "").strip()
     pinned_ab = want_ab and want_ab.lower() != "any"
