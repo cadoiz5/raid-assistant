@@ -637,6 +637,18 @@ def check_slot(slot, block):
     ivs_of = lambda: " / ".join(f"{scan.get('ivs', {}).get(s, 31)} {s}"
                                 for s in STATS if s in bounds)
 
+    # what to breed for - same text the "Target breed" panel shows - used when a
+    # Nature / IVs check fails (the breed itself, not the EV spread, is wrong)
+    tgt = None
+    if bounds and not stats_pass:
+        try:
+            from breed_calc import recommend
+            tgt = recommend(want, bounds, scan.get("nature"))
+        except Exception:
+            tgt = None
+        if tgt and tgt.get("error"):
+            tgt = None
+
     # ---------- BREED ----------
     # Nature first - the IV and EV checks lean on it.
     nature = scan.get("nature")
@@ -651,6 +663,8 @@ def check_slot(slot, block):
         c_nat = _chk("Nature", "na", "nature not recognised")
     elif _min_total_ev(base, mult, bounds) is not None:
         c_nat, nat_ok = _chk("Nature", "pass", nature), True
+    elif tgt and tgt.get("natures"):
+        c_nat, nat_ok = _chk("Nature", "fail", tgt["natures"]), False
     else:
         alt = suggest_nature(want, bounds, exclude=nature)
         plus = _plus_stat(alt)
@@ -667,7 +681,8 @@ def check_slot(slot, block):
     elif not base or mult is None:
         c_iv = _chk("IVs", "na", "nature not recognised")
     elif nat_ok is False:
-        c_iv = _chk("IVs", "blocked", "fix the nature first")
+        c_iv = (_chk("IVs", "fail", tgt["ivs"]) if tgt and tgt.get("ivs")
+                else _chk("IVs", "blocked", "fix the nature first"))
     else:
         ivs, bad = scan.get("ivs", {}), {}
         for stat, (lo, hi) in bounds.items():
@@ -676,13 +691,17 @@ def check_slot(slot, block):
                 bad[stat] = _iv_window(base[i], mult(i), lo, hi)
         # every bound reachable on its own, but do the low IVs together bust 510 EV?
         over = None if bad else _iv_budget_targets(base, mult, bounds, ivs)
-        if bad:
-            parts = [f"{s} {_fmt_bound(*w)}" if w else f"{s} impossible"
-                     for s, w in bad.items()]
-            c_iv = _chk("IVs", "fail", "need " + ", ".join(parts))
-        elif over:
-            parts = [f"{s} {v}+" if v < 31 else f"{s} 31" for s, v in over.items()]
-            c_iv = _chk("IVs", "fail", "need " + ", ".join(parts))
+        if bad or over:
+            if tgt and tgt.get("ivs"):
+                note = tgt["ivs"]
+            elif bad:
+                note = "need " + ", ".join(
+                    f"{s} {_fmt_bound(*w)}" if w else f"{s} impossible"
+                    for s, w in bad.items())
+            else:
+                note = "need " + ", ".join(
+                    f"{s} {v}+" if v < 31 else f"{s} 31" for s, v in over.items())
+            c_iv = _chk("IVs", "fail", note)
         else:
             c_iv = _chk("IVs", "pass", ivs_of())
 
