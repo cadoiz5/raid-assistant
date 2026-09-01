@@ -19,6 +19,7 @@ import tkinter as tk
 from tkinter import ttk
 
 import theme
+import sprites
 from scan_window import HERE, STRATS, center_over, evaluate_position, strat_names
 
 POSITIONS = ["P1", "P2", "P3", "P4"]
@@ -238,13 +239,20 @@ class MovesWindow:
                 mon, mv = self._cell_text(turn["actions"].get(p))
                 cell = ttk.Frame(self.table, relief="solid", borderwidth=1,
                                  padding=(6, 3), cursor="hand2")
+                clickable = [cell]
+                img = sprites.sprite(mon, 40) if mon else None
+                if img:
+                    il = ttk.Label(cell, image=img, cursor="hand2")
+                    il.image = img
+                    il.pack(anchor="w")
+                    clickable.append(il)
                 nl = ttk.Label(cell, text=mon or "–", font=bold, cursor="hand2")
                 ml = ttk.Label(cell, text=mv, foreground=theme.MOVE_FG, cursor="hand2")
                 nl.pack(anchor="w")
                 ml.pack(anchor="w")
                 cell.grid(row=i + 1, column=c, sticky="ew", padx=1, pady=1)
                 self._painters.append((i, p, [(nl, theme.FG), (ml, theme.MOVE_FG)]))
-                for w in (cell, nl, ml):
+                for w in clickable + [nl, ml]:
                     w.bind("<Button-1>", lambda e, n=i: self._toggle_row(n))
 
         for c in range(1, len(POSITIONS) + 1):

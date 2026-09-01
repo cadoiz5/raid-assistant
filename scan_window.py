@@ -29,6 +29,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 
 import theme
+import sprites
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SCRIPT = os.path.join(HERE, "screenshot.py")
@@ -901,10 +902,16 @@ class ScanWindow:
         right = ttk.Frame(body)
         right.pack(side="left", fill="both", expand=True)
 
-        self.target_lbl = ttk.Label(right, text="select a slot →", foreground=theme.FG_DIM,
+        head = ttk.Frame(right)
+        head.pack(fill="x")
+        self.sprite_lbl = ttk.Label(head)
+        self.sprite_lbl.pack(side="left", padx=(0, 8), anchor="n")
+        htext = ttk.Frame(head)
+        htext.pack(side="left", fill="x", expand=True)
+        self.target_lbl = ttk.Label(htext, text="select a slot →", foreground=theme.FG_DIM,
                                     font=("Consolas", 9), justify="left")
         self.target_lbl.pack(anchor="w")
-        self.banner = ttk.Label(right, text="", foreground=theme.FG_DIM,
+        self.banner = ttk.Label(htext, text="", foreground=theme.FG_DIM,
                                 font=("TkDefaultFont", 9), justify="left")
         self.banner.pack(anchor="w", pady=(2, 2))
         self._warn_slot = None  # slot num whose banner offers a "click to fix"
@@ -1218,6 +1225,9 @@ class ScanWindow:
             return
         slot = self.slots[sel[0]]
         self.active = slot["num"]
+        sp = sprites.sprite(slot["species"], 64)
+        self.sprite_lbl.config(image=sp or "")
+        self.sprite_lbl.image = sp
         self.target_lbl.config(text=re.sub(r"^\d+\s*-\s*", "", slot["raw"]))
         body = ""
         if self.active in self.scans:
