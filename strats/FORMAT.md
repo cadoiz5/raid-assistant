@@ -50,6 +50,10 @@ the Item check passes if the held item is any of them:
 1 - Golduck @ Sitrus Berry / Aguav Berry / Figy Berry
 ```
 
+The `Ability:` line takes the same `/` — `Ability: Dry Skin / Anticipation`
+passes if the mon is on either. (Write `Ability: Any`, or leave the line off,
+to not pin one.)
+
 ## Stat bounds
 
 Each entry is `<number><modifier> <STAT>`, where STAT is one of

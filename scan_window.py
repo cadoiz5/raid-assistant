@@ -79,6 +79,16 @@ def _norm(s):
     return re.sub(r"[^a-z0-9]", "", (s or "").lower())
 
 
+def _ability_opts(spec):
+    """A strat 'Ability:' value -> the normalised abilities it accepts.
+    '' / 'Any' -> [] (unpinned).  'Dry Skin / Anticipation' -> two entries;
+    the check passes if the scanned ability matches any of them."""
+    spec = (spec or "").strip()
+    if not spec or spec.lower() == "any":
+        return []
+    return [n for n in (_norm(p) for p in spec.split("/")) if n]
+
+
 try:
     with open(os.path.join(HERE, "data", "no_breed.txt"), encoding="utf-8") as _fh:
         # species whose IVs can't come from breeding; a legendary can re-roll its
@@ -726,11 +736,14 @@ def check_slot(slot, block):
         c_iv = _chk("IVs", "fail", "re-breed")
 
     want_ab = (slot["ability"] or "").strip()
-    pinned_ab = want_ab and want_ab.lower() != "any"
+    ab_opts = _ability_opts(want_ab)
+    pinned_ab = bool(ab_opts)
     ha = HIDDEN_ABILITY.get(_norm(want))
+    ha_norm = _norm(ha) if ha else None
     on_ab = scan.get("ability")
-    needs_ha = bool(pinned_ab and ha and _norm(want_ab) == _norm(ha))
-    has_ha = bool(scan.get("has_ha")) or bool(ha and _norm(on_ab) == _norm(ha))
+    # the mon *must* be on its HA only when every accepted ability is the HA
+    needs_ha = bool(pinned_ab and ha_norm and all(o == ha_norm for o in ab_opts))
+    has_ha = bool(scan.get("has_ha")) or bool(ha_norm and _norm(on_ab) == ha_norm)
     if needs_ha and not on_ab and not scan.get("has_ha"):
         c_ha = _chk("Hidden Ability", "missing", "missing information")
     elif needs_ha:
@@ -787,10 +800,10 @@ def check_slot(slot, block):
         c_ab = _chk("Ability", "na", on_ab or "not read")
     elif not on_ab:
         c_ab = _chk("Ability", "missing", "missing information")
-    elif _norm(on_ab) == _norm(want_ab):
+    elif _norm(on_ab) in ab_opts:
         c_ab = _chk("Ability", "pass", on_ab)
     else:
-        tag = " (HA)" if (ha and _norm(want_ab) == _norm(ha)) else ""
+        tag = " (HA)" if needs_ha else ""
         c_ab = _chk("Ability", "fail", f"{on_ab} -- need {want_ab}{tag}")
 
     need = [m for m in req_moves if _norm(m) not in egg]
@@ -1100,9 +1113,8 @@ class ScanWindow:
         rec = recommend(slot["species"], slot["bounds"])
 
         ha = HIDDEN_ABILITY.get(_norm(slot["species"]))
-        want_ab = (slot["ability"] or "").strip()
-        is_ha = bool(want_ab and want_ab.lower() != "any"
-                     and ha and _norm(want_ab) == _norm(ha))
+        ab_opts = _ability_opts(slot["ability"])
+        is_ha = bool(ab_opts and ha and all(o == _norm(ha) for o in ab_opts))
 
         self.banner.config(text="not scanned — breed for:", foreground=theme.FG_DIM)
         gid = self.tree.insert("", "end", open=True, tags=("group",),
