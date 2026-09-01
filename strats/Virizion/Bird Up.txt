@@ -1,3 +1,143 @@
+# Virizion raid — "Bird Up" strat.
+# Constraints for all four positions. Format: see strats/FORMAT.md
+# HA is auto-detected — don't write "(HA)" on the Ability line.
+
+[P1]
+
+1 - Jynx @ Focus Sash
+Ability: Oblivious
+284+ Spe
+- Lucky Chant
+
+2 - Skarmory @ Life Orb
+Ability: Any
+331-334 HP / 413-416 Def
+- Brave Bird
+
+3 - Staraptor @ Charti Berry
+Ability: Intimidate
+371-374 HP / 259-262 Def
+- Brave Bird
+- Final Gambit
+
+4 - Gliscor @ Flying Gem
+Ability: Any
+351-354 HP / 235+ Atk / 314 Def
+- Acrobatics
+
+5 - Metagross @ Jaboca Berry
+Ability: Clear Body
+361-364 HP / 330+ Atk / 356-359 Def
+- Brick Break
+- Explosion
+
+6 - Garchomp @ Rocky Helmet
+Ability: Rough Skin
+417-420 HP / 290+ Atk / 314-317 Def / 234+ Spe
+- Dig
+
+[P2]
+
+1 - Jynx @ Light Clay
+Ability: Oblivious
+316+ Spe
+- Reflect
+
+2 - Skarmory @ Life Orb
+Ability: Any
+331-334 HP / 413-416 Def
+- Brave Bird
+
+3 - Staraptor @ Charti Berry
+Ability: Intimidate
+371-374 HP / 259-262 Def
+- Brave Bird
+- Final Gambit
+
+4 - Gliscor @ Flying Gem
+Ability: Any
+351-354 HP / 235+ Atk / 314 Def
+- Acrobatics
+
+5 - Metagross @ Jaboca Berry
+Ability: Clear Body
+361-364 HP / 330+ Atk / 356-359 Def
+- Reflect
+- Explosion
+
+6 - Garchomp @ Rocky Helmet
+Ability: Rough Skin
+417-420 HP / 290+ Atk / 314-317 Def / 234+ Spe
+- Dig
+
+[P3]
+
+1 - Jynx @ Flame Orb
+Ability: Oblivious
+316+ Spe
+- Trick
+
+2 - Skarmory @ Life Orb
+Ability: Any
+331-334 HP / 413-416 Def
+- Brave Bird
+
+3 - Staraptor @ Charti Berry
+Ability: Reckless
+371-374 HP / 259-262 Def
+- Brave Bird
+- Final Gambit
+
+4 - Gliscor @ Flying Gem
+Ability: Any
+330 HP / 235+ Atk / 375 Def
+- Acrobatics
+- Brick Break
+
+5 - Illumise @ Jaboca Berry
+Ability: Oblivious
+247+ HP / 225+ Def / 284+ Spe
+- Charm
+
+6 - Garchomp @ Rocky Helmet
+Ability: Rough Skin
+417-420 HP / 290+ Atk / 314-317 Def / 234+ Spe
+- Dig
+
+[P4]
+
+1 - Toxicroak @ Choice Band
+Ability: Dry Skin/Anticipation
+354+ HP / 332+ Atk / 168 Def / 214 Spe
+- Aerial Ace
+
+2 - Skarmory @ Sitrus Berry
+Ability: Any
+331-334 HP / 205+ Atk / 347 Def
+- Brave Bird
+
+3 - Staraptor @ Charti Berry
+Ability: Reckless
+371-374 HP / 259-262 Def
+- Brave Bird
+- Final Gambit
+
+4 - Jynx @ Focus Sash
+Ability: Oblivious
+284+ Spe
+- Lucky Chant
+
+5 - Metagross @ Flame Orb
+Ability: Clear Body
+301 HP / 391-394 Def
+- Trick
+
+6 - Garchomp @ Rocky Helmet
+Ability: Rough Skin
+417-420 HP / 290+ Atk / 314-317 Def / 234+ Spe
+- Earthquake
+- Dig
+
 [Moves]
 
 Turn 1

@@ -1,3 +1,156 @@
+# Terrakion raid — "Lucid Clay" strat.
+# Constraints for all four positions. Format: see strats/FORMAT.md
+# HA is auto-detected — don't write "(HA)" on the Ability line.
+
+[P1]
+
+1 - Stantler @ Choice Scarf
+Ability: Intimidate
+158+ Spe
+- Reflect
+
+2 - Samurott @ Life Orb
+Ability: Torrent
+300-331 HP / 185-206 Def / 346 SpA / 158-176 Spe
+- Hydro Pump
+- Hydro Cannon
+
+3 - Poliwrath @ Rocky Helmet
+Ability: Any
+322- HP / 249- Def / 189+ Spe
+- Belly Drum
+
+4 - Claydol @ Light Clay
+Ability: Levitate
+292-295 HP / 205 Atk / 336-339 Def / 156- Spe
+- Psych Up
+- Reflect
+- Drill Run
+
+5 - Sableye @ Jaboca Berry
+Ability: Prankster
+288+ HP / 233+ Def
+- Tickle
+- Quash
+
+6 - Torterra @ Miracle Seed
+Ability: Shell Armor
+325+ HP / 348 Atk / 303+ Def
+- Wide Guard
+- Tickle
+- Wood Hammer
+
+[P2]
+
+1 - Stantler @ Flame Orb
+Ability: Intimidate
+158+ Spe
+- Trick
+
+2 - Samurott @ Life Orb
+Ability: Torrent
+300-331 HP / 185-206 Def / 346 SpA / 158-176 Spe
+- Hydro Pump
+- Hydro Cannon
+
+3 - Claydol @ Jaboca Berry
+Ability: Levitate
+258-261 HP / 239 Atk / 325 Def / 158+ Spe
+- Psych Up
+- Zen Headbutt
+- Drill Run
+
+4 - Ferrothorn @ Choice Band
+Ability: Iron Barbs
+305+ HP / 292+ Atk / 355+ Def / 53- Spe
+- Gyro Ball
+
+5 - Sableye
+Ability: Prankster
+241- HP / 204- Def
+- Will-O-Wisp
+
+6 - Torterra @ Rocky Helmet
+Ability: Shell Armor
+325+ HP / 348 Atk / 303+ Def
+- Wood Hammer
+- Tickle
+- Wide Guard
+
+[P3]
+
+1 - Murkrow
+Ability: Prankster
+Any
+- Tailwind
+
+2 - Samurott @ Life Orb
+Ability: Any
+300-331 HP / 185-206 Def / 346 SpA / 177+ Spe
+- Hydro Pump
+- Hydro Cannon
+
+3 - Claydol @ Jaboca Berry
+Ability: Levitate
+258-261 HP / 238 Atk / 336-339 Def / 157 Spe
+- Trick Room
+- Psych Up
+- Zen Headbutt
+- Drill Run
+
+4 - Ferrothorn @ Covert Mantle
+Ability: Iron Barbs
+305+ HP / 292+ Atk / 355+ Def / 53- Spe
+- Gyro Ball
+
+5 - Medicham @ Expert Belt
+Ability: Pure Power
+230-261 HP / 213+ Atk / 155-186 Def
+- Close Combat
+
+6 - Garchomp @ Rocky Helmet
+Ability: Rough Skin
+389+ HP / 258+ Def
+- Helping Hand
+
+[P4]
+
+1 - Pelipper @ Choice Scarf
+Ability: Drizzle
+Any
+- Defog
+
+2 - Jirachi @ Jaboca Berry
+Ability: Serene Grace
+341 HP / 260-299 Def
+- Lucky Chant
+- Wish
+
+3 - Claydol @ Covert Mantle
+Ability: Levitate
+321-324 HP / 312 Def / 155- Spe
+- Power Swap
+- Safeguard
+- Gravity
+- Explosion
+
+4 - Smeargle
+Ability: Any
+Any
+- Lucky Chant
+
+5 - Gallade @ Fighting Gem
+Ability: Any
+246+ HP / 383 Atk / 198+ Def
+- Quick Guard
+- Trick Room
+- Close Combat
+
+6 - Conkeldurr @ Choice Band
+Ability: Guts
+403+ HP / 416 Atk / 215-226 Def
+- Low Kick
+
 [Moves]
 
 Turn 1
@@ -63,17 +216,16 @@ P4 - Medicham Close Combat
 Turn 11
 P1 - Torterra Wide Guard
 P2 - Torterra Tickle
-P3 - Garchomp Helping Hand Any
+P3 - Garchomp Helping Hand
 P4 - Conkeldurr Low Kick
 
 Turn 12
 P1 - Torterra Wood Hammer
 P2 - Torterra Wood Hammer
-P3 - Garchomp Helping Hand Any
+P3 - Garchomp Helping Hand
 P4 - Conkeldurr Low Kick
 
 Turn 13
 P1 - Torterra Wood Hammer
 P2 - Torterra Wood Hammer
-P3 - Garchomp Helping Hand Any
-P4 - -
+P3 - Garchomp Helping Hand

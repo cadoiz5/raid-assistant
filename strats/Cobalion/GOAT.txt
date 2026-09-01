@@ -1,3 +1,138 @@
+# Cobalion raid — "GOAT" strat.
+# Constraints for all four positions. Format: see strats/FORMAT.md
+# HA is auto-detected — don't write "(HA)" on the Ability line.
+
+[P1]
+
+1 - Darmanitan @ Choice Scarf
+Ability: Sheer Force
+351- HP / 348+ Atk / 146- Def / 258+ Spe
+- Flare Blitz
+
+2 - Charizard @ Focus Sash
+Ability: Any
+334+ SpA / 284+ Spe
+- Weather Ball
+
+3 - Reuniclus @ Covert Mantle
+Ability: Magic Guard
+361 HP / 155-204 Def / 218 SpD
+- Trick Room
+- Gravity
+
+4 - Ampharos @ Expert Belt
+Ability: Plus
+290-321 HP / 244+ Def / 352+ SpA
+- Focus Blast
+
+5 - Lucario @ Fist Plate
+Ability: Any
+352+ SpA
+- Focus Blast
+
+6 - Empoleon @ Rocky Helmet
+Ability: Any
+311 HP / 214 Def / 339+ SpA
+- Hydro Cannon
+
+[P2]
+
+1 - Darmanitan @ Choice Scarf
+Ability: Sheer Force
+351- HP / 348+ Atk / 146- Def / 258+ Spe
+- Flare Blitz
+
+2 - Charizard @ Focus Sash
+Ability: Any
+334+ SpA / 284+ Spe
+- Weather Ball
+
+3 - Nidoking @ Choice Specs
+Ability: Sheer Force
+146+ Def / 290+ SpA / 218 SpD / 212- Spe
+- Earth Power
+
+4 - Ampharos @ Expert Belt
+Ability: Plus
+321+ HP / 206 Def / 287+ SpA
+- Focus Blast
+
+5 - Kingdra @ Life Orb
+Ability: Any
+291 HP / 226 Def / 311+ SpA
+- Brine
+
+6 - Empoleon @ Rocky Helmet
+Ability: Any
+311 HP / 214 Def / 339+ SpA
+- Hydro Cannon
+
+[P3]
+
+1 - Ninetales @ Focus Sash
+Ability: Drought
+282+ SpA / 284+ Spe
+- Weather Ball
+
+2 - Charizard @ Choice Scarf
+Ability: Any
+334+ SpA / 211+ Spe
+- Weather Ball
+
+3 - Whimsicott @ Flame Orb
+Ability: Prankster
+305+ HP / 186 SpD
+- Switcheroo
+
+4 - Ampharos @ Choice Specs
+Ability: Plus
+333+ HP / 244+ Def / 287+ SpA / 273+ SpD
+- Focus Blast
+
+5 - Lucario @ Fist Plate
+Ability: Any
+352+ SpA
+- Focus Blast
+
+6 - Empoleon @ Rocky Helmet
+Ability: Any
+315+ HP / 339+ SpA / 244+ SpD
+- Hydro Cannon
+
+[P4]
+
+1 - Jirachi @ Light Clay
+Ability: Serene Grace
+404 HP / 220 Def / 236 SpD / 316+ Spe
+- Reflect
+- Lucky Chant
+- Light Screen
+
+2 - Ampharos @ Choice Specs
+Ability: Plus
+321 HP / 238+ Def / 287+ SpA / 216 SpD
+- Focus Blast
+
+3 - Nidoking @ Ground Gem
+Ability: Sheer Force
+335+ HP / 290+ SpA
+- Earth Power
+
+4 - Lucario @ Fist Plate
+Ability: Any
+352+ SpA
+- Focus Blast
+
+5 - Murkrow @ Charti Berry
+Ability: Prankster
+255- HP / 114- SpD
+- Quash
+
+6 - Ferrothorn @ Rocky Helmet
+Ability: Iron Barbs
+321 HP / 330 Def
+- Protect
+
 [Moves]
 
 Turn 1
@@ -49,7 +184,4 @@ P3 - Empoleon Hydro Cannon
 P4 - Murkrow Quash
 
 Turn 9
-P1 - -
-P2 - -
-P3 - -
 P4 - Ferrothorn Protect
