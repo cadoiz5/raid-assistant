@@ -342,9 +342,10 @@ def _scan_consistency(scan):
     scanned level; if any disagree the OCR mangled a number (or the paste was
     hand-edited wrong). Returns "Final stats don't match EVs/IVs/Nature" or None.
 
-    Only the stats the scan actually read an IV *and* a value for are checked;
-    a missing EV counts as 0. Needs a recognised nature. Works at any level -
-    the mon doesn't have to be 100."""
+    Every stat with a shown value is checked. An IV the paste doesn't list is 31
+    and an EV it doesn't list is 0 - that's the PokePaste convention the scanner
+    writes, so an omitted value is known data, not a gap. Needs a recognised
+    nature. Works at any level - the mon doesn't have to be 100."""
     base = BASE_STATS.get(scan.get("species"))
     nat = NATURES.get((scan.get("nature") or "").lower())
     if not base or nat is None:
@@ -353,10 +354,10 @@ def _scan_consistency(scan):
     level = scan.get("level") or 100
     stats, ivs, evs = scan.get("stats") or {}, scan.get("ivs") or {}, scan.get("evs") or {}
     for i, s in enumerate(STATS):
-        if s not in stats or s not in ivs:
+        if s not in stats:
             continue
         sign = None if i == 0 else 1 if i == plus else -1 if i == minus else 0
-        if _exact_stat(base[i], ivs[s], evs.get(s, 0), sign, level) != stats[s]:
+        if _exact_stat(base[i], ivs.get(s, 31), evs.get(s, 0), sign, level) != stats[s]:
             return "Final stats don't match EVs/IVs/Nature"
     return None
 
@@ -373,29 +374,23 @@ def _stat_signs(nature):
 
 def recompute_stats(scan):
     """The stats implied by the scanned base / IV / EV / nature at the scanned
-    level. A stat whose IV wasn't read is left at its scanned value (can't
-    recompute it); only if that's missing too is it computed at IV 31.
+    level (an unlisted IV is 31, an unlisted EV is 0 - PokePaste convention).
     -> {stat: value} or None if base stats / nature are unknown."""
     base = BASE_STATS.get(scan.get("species"))
     signs = _stat_signs(scan.get("nature"))
     if not base or signs is None:
         return None
     level = scan.get("level") or 100
-    stats, ivs, evs = scan.get("stats") or {}, scan.get("ivs") or {}, scan.get("evs") or {}
-    out = {}
-    for i, s in enumerate(STATS):
-        if s in ivs:
-            out[s] = _exact_stat(base[i], ivs[s], evs.get(s, 0), signs[i], level)
-        else:
-            out[s] = stats.get(s, _exact_stat(base[i], 31, evs.get(s, 0), signs[i], level))
-    return out
+    ivs, evs = scan.get("ivs") or {}, scan.get("evs") or {}
+    return {s: _exact_stat(base[i], ivs.get(s, 31), evs.get(s, 0), signs[i], level)
+            for i, s in enumerate(STATS)}
 
 
 def solve_evs_for_stats(scan):
-    """EVs that make base / IV / nature reproduce the scanned final stats. Only
-    the stats that currently disagree are re-solved; the rest keep their scanned
-    EV. -> {stat: ev} (all six) or None if a stat can't be hit within 0..252 or
-    the total tops the EV cap."""
+    """EVs that make base / IV / nature reproduce the scanned final stats (IV
+    unlisted = 31). Only the stats that currently disagree are re-solved; the
+    rest keep their scanned EV. -> {stat: ev} (all six) or None if a stat can't
+    be hit within 0..252 or the total tops the EV cap."""
     base = BASE_STATS.get(scan.get("species"))
     signs = _stat_signs(scan.get("nature"))
     if not base or signs is None:
@@ -405,12 +400,13 @@ def solve_evs_for_stats(scan):
     out = dict.fromkeys(STATS, 0)
     out.update({s: v for s, v in (scan.get("evs") or {}).items() if s in out})
     for i, s in enumerate(STATS):
-        if s not in stats or s not in ivs:
+        if s not in stats:
             continue
-        if _exact_stat(base[i], ivs[s], out[s], signs[i], level) == stats[s]:
+        iv = ivs.get(s, 31)
+        if _exact_stat(base[i], iv, out[s], signs[i], level) == stats[s]:
             continue                       # this stat already lines up - leave it
         hit = next((ev for ev in range(0, 253, 4)
-                    if _exact_stat(base[i], ivs[s], ev, signs[i], level) == stats[s]), None)
+                    if _exact_stat(base[i], iv, ev, signs[i], level) == stats[s]), None)
         if hit is None:
             return None
         out[s] = hit
@@ -480,16 +476,17 @@ def suggest_evs(species, scan, bounds):
     target, changed, windows = dict(cur), set(), {}
     for stat, (lo, hi) in bounds.items():
         i = STATS.index(stat)
-        w = _ev_window(base[i], ivs.get(stat, 31), mult(i), lo, hi)
+        iv = ivs.get(stat, 31)
+        w = _ev_window(base[i], iv, mult(i), lo, hi)
         if w is None:
             return ("breed", None)
         windows[stat] = w
-        if cur[stat] < w[0]:
-            target[stat] = w[0]
-            changed.add(stat)
-        elif cur[stat] > w[1]:
-            target[stat] = w[1]
-            changed.add(stat)
+        # already in range at the current EV? leave it - even if that EV isn't a
+        # multiple of 4, trimming it to one (6 -> 4) wouldn't move the stat.
+        if lo <= _final_stat(base[i], iv, cur[stat], mult(i)) <= hi:
+            continue
+        target[stat] = w[0] if cur[stat] < w[0] else w[1]
+        changed.add(stat)
 
     excess = sum(target.values()) - EV_CAP
     if excess > 0:  # reclaim: unconstrained stats first (most EVs), then constrained to min
@@ -610,7 +607,7 @@ def check_slot(slot, block):
     want = slot["species"]
     bounds, req_moves = slot["bounds"], slot["moves"]
     r = {"scan": scan, "want": want, "species_ok": True, "species_msg": "",
-         "evolve": None, "warn": _scan_consistency(scan),
+         "evolve": None, "warn": _scan_consistency(scan), "incomplete": None,
          "breed": [], "training": []}
 
     steps = None
@@ -623,11 +620,25 @@ def check_slot(slot, block):
         r["evolve"] = (f"evolve to {want} ("
                        + ", ".join(_evo_how(s) for s in steps) + ")")
 
+    # the scan contradicts itself (final stats vs EVs/IVs/nature). Every breed
+    # and training check downstream is derived from those numbers, so there's
+    # nothing worth computing until the mismatch is fixed - just flag it.
+    if r["warn"]:
+        return r
+
+    rels = slot.get("rel", [])
+
+    # the strat constrains stats but the scan has no Stats line at all - unlike a
+    # missing IV/EV (which the PokePaste convention fills in as 31 / 0), there's
+    # no default for a final stat, so nothing downstream can run. Flag it.
+    if (bounds or rels) and not scan["stats"]:
+        r["incomplete"] = "scan didn't read the final stats"
+        return r
+
     base = BASE_STATS.get(want)
     mult = _mult_fn(scan.get("nature"))
     projected = steps is not None or (scan.get("level") not in (100, None))
     eff = _project_stats(want, scan) if projected else scan["stats"]
-    rels = slot.get("rel", [])
     rel_bad = [x for x in rels if eff and _rel_ok(x, eff) is False]
 
     # does the mon, as it stands, already satisfy every stat bound (and rule)?
@@ -805,7 +816,7 @@ def slot_ok(slot, block):
     """True when every applicable check passes (grid / list roll-up).
     A 'missing' check counts as not-ok - can't confirm what didn't scan."""
     r = check_slot(slot, block)
-    if not r["species_ok"] or r["warn"]:
+    if not r["species_ok"] or r["warn"] or r["incomplete"]:
         return False
     return all(c["status"] not in ("fail", "missing")
                for c in r["breed"] + r["training"])
@@ -818,6 +829,8 @@ def validate(slot, block):
         return [f"species: {r['species_msg']}"]
     out = [f"{c['label']}: {c['note']}" for c in r["breed"] + r["training"]
            if c["status"] in ("fail", "missing")]
+    if r["incomplete"]:
+        out.insert(0, r["incomplete"])
     if r["warn"]:
         out.insert(0, r["warn"])
     return out
@@ -1029,11 +1042,35 @@ class ScanWindow:
                                foreground=theme.FAIL)
             return
 
-        extra = []
         if r["warn"]:
-            extra.append("⚠ " + r["warn"] + "  (click to fix)")
+            # scan contradicts itself - show only the error, no derived checks
             self._warn_slot = num
-            self.banner.config(cursor="hand2")
+            self.banner.config(text="⚠  " + r["warn"] + "   (click to fix)",
+                               foreground=theme.FAIL, cursor="hand2")
+            gid = self.tree.insert("", "end", open=True, tags=("group",),
+                                   text="⚠  Scan data", values=("",))
+            iid = self.tree.insert(gid, "end", tags=("fail",), text="  Final stats",
+                                   values=("don't match the EVs / IVs / Nature",))
+            self._notes[iid] = (
+                "The scanned final stats can't come from the scanned EVs, IVs and "
+                "nature. Click the banner to recompute the stats or back-solve the "
+                "EVs, then the breed / training checks will run.")
+            return
+
+        if r["incomplete"]:
+            # no final stats to check the strat's stat bounds against - re-scan
+            self.banner.config(text="⚠  " + r["incomplete"], foreground=theme.FAIL)
+            gid = self.tree.insert("", "end", open=True, tags=("group",),
+                                   text="⚠  Incomplete scan", values=("",))
+            iid = self.tree.insert(gid, "end", tags=("fail",), text="  Final stats",
+                                   values=("not read",))
+            self._notes[iid] = (
+                "The strat has stat bounds but the scan captured no Stats line, so "
+                "there's nothing to check them against. Re-scan the card (or paste "
+                "the Stats line in) and the breed / training checks will run.")
+            return
+
+        extra = []
         missing = [c["label"] for c in r["breed"] + r["training"]
                    if c["status"] == "missing"]
         if missing:
