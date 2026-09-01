@@ -19,7 +19,7 @@ try:
 except ImportError:  # Pillow is a hard dep elsewhere, but never crash the GUI over a sprite
     Image = ImageTk = None
 
-DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sprites")
+DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sprites")
 
 _cache = {}   # (norm_name, size) -> PhotoImage | None
 

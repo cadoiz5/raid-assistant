@@ -13,7 +13,7 @@ import os
 import shutil
 import subprocess
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # repo root
 BRANCH = "main"
 
 _NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)  # keep console from flashing on Windows

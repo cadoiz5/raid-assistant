@@ -18,9 +18,9 @@ import re
 import tkinter as tk
 from tkinter import ttk
 
-import theme
-import sprites
-from scan_window import HERE, STRATS, center_over, evaluate_position, strat_names
+from . import theme
+from . import sprites
+from .scan_window import HERE, STRATS, center_over, evaluate_position, strat_names
 
 POSITIONS = ["P1", "P2", "P3", "P4"]
 

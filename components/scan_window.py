@@ -28,11 +28,11 @@ import sys
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 
-import theme
-import sprites
+from . import theme
+from . import sprites
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-SCRIPT = os.path.join(HERE, "screenshot.py")
+HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # project root
+SCRIPT = os.path.join(HERE, "components", "screenshot.py")
 STRATS = os.path.join(HERE, "strats")
 
 STATUS_GLYPH = {"none": "○", "scanned": "●", "valid": "✓", "invalid": "✗"}
@@ -664,7 +664,7 @@ def check_slot(slot, block):
     tgt = None
     if bounds and not stats_pass:
         try:
-            from breed_calc import recommend
+            from .breed_calc import recommend
             tgt = recommend(want, bounds)
         except Exception:
             tgt = None
@@ -1109,7 +1109,7 @@ class ScanWindow:
     def _show_target(self, slot):
         """Not-scanned slot: the IV ranges / natures to breed for (same maths as
         the pokepaste-maker Breeding.txt)."""
-        from breed_calc import recommend  # lazy - avoids an import cycle
+        from .breed_calc import recommend  # lazy - avoids an import cycle
         rec = recommend(slot["species"], slot["bounds"])
 
         ha = HIDDEN_ABILITY.get(_norm(slot["species"]))

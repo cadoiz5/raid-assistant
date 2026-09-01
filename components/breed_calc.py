@@ -18,7 +18,7 @@ recommend(species, bounds) is what the scan window calls for a not-yet-scanned
 slot.
 """
 
-from scan_window import BASE_STATS, NATURES
+from .scan_window import BASE_STATS, NATURES
 
 LEVEL = 100
 EV_TOTAL = 508              # 127 x 4 - the exact budget the min-solver assumes

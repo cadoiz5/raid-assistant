@@ -10,7 +10,7 @@ Main view is a coverage grid:
     columns = team positions P1-P4
     cell    = a button; label = scan progress for that (raid, position):
               – nothing, ! partial, ✗ a scan fails its strat, ✓ all 6 valid.
-              Click it to open the scan window (scan_window.py).
+              Click it to open the scan window (components/scan_window.py).
 
 Gear button (top right) drops the whole menu:
     New / Change ▸ (list) / Delete Character
@@ -30,11 +30,10 @@ import threading
 import tkinter as tk
 from tkinter import ttk, simpledialog, messagebox
 
-import theme
-import updater
-from prefs import Prefs
-from scan_window import ScanWindow, evaluate_position
-from moves_window import MovesWindow
+from components import theme, updater
+from components.prefs import Prefs
+from components.scan_window import ScanWindow, evaluate_position
+from components.moves_window import MovesWindow
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SAVES = os.path.join(HERE, "saves")

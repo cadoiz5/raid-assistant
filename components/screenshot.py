@@ -3,11 +3,11 @@
 screenshot.py - Select a region of your screen showing a Pokemon summary,
 OCR it, and generate a PokePaste (copied to your clipboard).
 
-Usage:
-    python screenshot.py                    # interactive: drag a box on screen
-    python screenshot.py --image shot.png   # parse an existing screenshot file
-    python screenshot.py --debug            # also print the OCR rows / column split
-    python screenshot.py --scale 4          # upscale factor for OCR (default 3)
+Usage (from the project root):
+    python components/screenshot.py                  # interactive: drag a box on screen
+    python components/screenshot.py --image shot.png # parse an existing screenshot file
+    python components/screenshot.py --debug          # also print the OCR rows / columns
+    python components/screenshot.py --scale 4        # upscale factor for OCR (default 3)
 
 Dependencies:
     pip install pillow pytesseract mss pyperclip
@@ -19,7 +19,7 @@ Dependencies:
 Reference lists (data/moves.txt, data/abilities.txt, data/items.txt,
 data/species.txt) let the parser snap OCR text to real names. Build them from
 PokeMMO's dex dump with:
-    python build_lists.py
+    python components/build_lists.py
 The script still runs without them, just with rawer output.
 """
 
@@ -94,12 +94,13 @@ STAT_LABELS = ["HP", "Atk", "Def", "SpA", "SpD", "Spe"]
 class Ref:
     """A reference name list (moves / abilities / items / species) loaded from a
     txt file in the data/ folder - one name per line, '#' lines ignored. Build
-    the files from PokeMMO's dex dump with `python build_lists.py`. Missing file
+    the files from PokeMMO's dex dump with `python components/build_lists.py`. Missing file
     => empty list => that snap is silently skipped."""
 
     def __init__(self, fname):
         self.names, self.lc, self.key = [], [], []
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", fname)
+        path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                            "data", fname)
         try:
             with open(path, encoding="utf-8") as fh:
                 for ln in fh:

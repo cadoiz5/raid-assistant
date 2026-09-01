@@ -4,7 +4,7 @@ build_lists.py - regenerate the reference name lists that screenshot.py snaps to
 straight from PokeMMO's dex dump (../dump/*.json).
 
 Run this once, and again whenever the dump is refreshed:
-    python build_lists.py
+    python components/build_lists.py
 
 Writes to the data/ folder: moves.txt, abilities.txt, items.txt, species.txt,
 species_stats.json (base stats, for the EV-fix suggestions).
@@ -14,7 +14,7 @@ import json
 import os
 import re
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # project root
 DUMP = os.path.join(HERE, "..", "dump")
 DATA = os.path.join(HERE, "data")
 

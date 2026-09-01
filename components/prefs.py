@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """
 prefs.py - tiny persistent key/value store for user preferences (prefs.json,
-next to this script). Currently just remembers the capture region so it doesn't
+in the project root). Currently just remembers the capture region so it doesn't
 have to be re-set every run; more keys can be added freely.
 """
 
 import json
 import os
 
-PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prefs.json")
+PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                    "prefs.json")
 
 
 class Prefs:
