@@ -40,7 +40,6 @@ The script auto-detects Tesseract on `PATH` or in the usual
 `Program Files\Tesseract-OCR` locations.
 
 The `data/` reference lists are committed, so the tools work out of the box.
-Rerun `python components/build_lists.py` only when the PokeMMO dex dump is refreshed.
 
 ## Updating
 
