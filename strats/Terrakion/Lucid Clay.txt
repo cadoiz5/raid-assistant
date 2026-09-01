@@ -81,7 +81,6 @@ Ability: Shell Armor
 
 1 - Murkrow
 Ability: Prankster
-Any
 - Tailwind
 
 2 - Samurott @ Life Orb
@@ -117,7 +116,6 @@ Ability: Rough Skin
 
 1 - Pelipper @ Choice Scarf
 Ability: Drizzle
-Any
 - Defog
 
 2 - Jirachi @ Jaboca Berry
@@ -136,7 +134,6 @@ Ability: Levitate
 
 4 - Smeargle
 Ability: Any
-Any
 - Lucky Chant
 
 5 - Gallade @ Fighting Gem

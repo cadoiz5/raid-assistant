@@ -107,7 +107,7 @@ Ability: Rough Skin
 [P4]
 
 1 - Toxicroak @ Choice Band
-Ability: Dry Skin/Anticipation
+Ability: Dry Skin / Anticipation
 354+ HP / 332+ Atk / 168 Def / 214 Spe
 - Aerial Ace
 
