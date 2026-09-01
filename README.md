@@ -2,6 +2,8 @@
 
 This app was made with the help of Claude. AI does a lot of things well, but it doesn't understand raids like I do. Lot of the logic, especially behind the verifications and iv, nature and ev suggestions were made by me (this is not something AI understands well enough). It is hardly a plug and play prompt. The work takes days of back and forth implementation, refining and verifying. What would've taken me 3 weeks i finished in 3 days, because again I can focus on the underlying logic and result rather than code.
 
+Thanks to Swift and Dracula for collecting the strat data, and Rogue Master for testing.
+
 # raid-assistant
 
 A personal tool for tracking PokeMMO raid teams. It OCRs a Pokemon summary card
