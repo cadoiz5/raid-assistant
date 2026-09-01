@@ -28,9 +28,10 @@ def _norm(s):
     return re.sub(r"[^a-z0-9]", "", (s or "").lower())
 
 
-def sprite(species, size=40):
-    """PhotoImage for `species` scaled to size x size, or None."""
-    key = (_norm(species), int(size))
+def sprite(species, size=40, muted=False):
+    """PhotoImage for `species` scaled to size x size, or None. `muted=True`
+    returns a dimmed greyscale version (used for done / unselected cells)."""
+    key = (_norm(species), int(size), bool(muted))
     if key in _cache:
         return _cache[key]
 
@@ -41,6 +42,10 @@ def sprite(species, size=40):
             im = Image.open(path).convert("RGBA")
             if im.size != (key[1], key[1]):
                 im = im.resize((key[1], key[1]), Image.LANCZOS)
+            if muted:
+                alpha = im.getchannel("A").point(lambda a: a * 45 // 100)
+                grey = im.convert("L").point(lambda v: v * 70 // 100)
+                im = Image.merge("RGBA", (grey, grey, grey, alpha))
             img = ImageTk.PhotoImage(im)
         except Exception:
             img = None

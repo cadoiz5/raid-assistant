@@ -131,7 +131,7 @@ class MovesWindow:
         checked = set(saved)
         self.col_vars = {p: tk.BooleanVar(value=p in checked) for p in POSITIONS}
 
-        top = ttk.Frame(frame)
+        self.top = top = ttk.Frame(frame)
         top.pack(fill="x")
 
         self.ad_var = tk.StringVar()
@@ -149,6 +149,26 @@ class MovesWindow:
 
         self.body = ttk.Frame(frame)
         self.body.pack(fill="both", expand=True, pady=(8, 0))
+
+        self.canvas = tk.Canvas(self.body, highlightthickness=0,
+                                background=theme.BG)
+        vsb = ttk.Scrollbar(self.body, orient="vertical",
+                            command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=vsb.set)
+        vsb.pack(side="right", fill="y")
+        self.canvas.pack(side="left", fill="both", expand=True)
+
+        self._holder = ttk.Frame(self.canvas)
+        self._holder_id = self.canvas.create_window(
+            (0, 0), window=self._holder, anchor="nw")
+        self._holder.bind("<Configure>", lambda e: self.canvas.configure(
+            scrollregion=self.canvas.bbox("all")))
+        self.canvas.bind("<Configure>", lambda e: self.canvas.itemconfigure(
+            self._holder_id, width=e.width))
+        self.canvas.bind("<Enter>", lambda e: self.canvas.bind_all(
+            "<MouseWheel>", self._on_wheel))
+        self.canvas.bind("<Leave>", lambda e: self.canvas.unbind_all(
+            "<MouseWheel>"))
         self.table = None
 
         self.info = ttk.Label(frame, text="", foreground=theme.FG_DIM)
@@ -218,7 +238,7 @@ class MovesWindow:
     def _build_table(self):
         if self.table is not None:
             self.table.destroy()
-        self.table = ttk.Frame(self.body)
+        self.table = ttk.Frame(self._holder)
         self.table.pack(anchor="nw")
 
         bold = ("TkDefaultFont", 9, "bold")
@@ -234,24 +254,27 @@ class MovesWindow:
         for i, turn in enumerate(self.turns):
             tl = ttk.Label(self.table, text=turn["turn"], anchor="nw")
             tl.grid(row=i + 1, column=0, sticky="nw", padx=(0, 8), pady=3)
-            self._painters.append((i, None, [(tl, theme.FG)]))
+            self._painters.append((i, None, [(tl, theme.FG)], None))
             for c, p in enumerate(POSITIONS, start=1):
                 mon, mv = self._cell_text(turn["actions"].get(p))
                 cell = ttk.Frame(self.table, relief="solid", borderwidth=1,
                                  padding=(6, 3), cursor="hand2")
                 clickable = [cell]
                 img = sprites.sprite(mon, 40) if mon else None
+                spr = None
                 if img:
                     il = ttk.Label(cell, image=img, cursor="hand2")
                     il.image = img
                     il.pack(anchor="w")
                     clickable.append(il)
+                    spr = (il, mon)
                 nl = ttk.Label(cell, text=mon or "–", font=bold, cursor="hand2")
                 ml = ttk.Label(cell, text=mv, foreground=theme.MOVE_FG, cursor="hand2")
                 nl.pack(anchor="w")
                 ml.pack(anchor="w")
-                cell.grid(row=i + 1, column=c, sticky="ew", padx=1, pady=1)
-                self._painters.append((i, p, [(nl, theme.FG), (ml, theme.MOVE_FG)]))
+                cell.grid(row=i + 1, column=c, sticky="nsew", padx=1, pady=1)
+                self._painters.append(
+                    (i, p, [(nl, theme.FG), (ml, theme.MOVE_FG)], spr))
                 for w in clickable + [nl, ml]:
                     w.bind("<Button-1>", lambda e, n=i: self._toggle_row(n))
 
@@ -259,15 +282,37 @@ class MovesWindow:
             self.table.columnconfigure(c, weight=1, uniform="pos")
 
         self._paint()
-        self.win.geometry("")  # shrink-wrap to the table
+        self._fit_window()
+
+    def _fit_window(self):
+        """Size the window to the table, but never taller than the screen - the
+        canvas scrolls vertically for whatever doesn't fit."""
+        self.win.update_idletasks()
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        tw = self._holder.winfo_reqwidth()
+        th = self._holder.winfo_reqheight()
+        chrome_w = 24 + 20        # scrollbar + frame padding
+        chrome_h = (self.top.winfo_reqheight() + self.info.winfo_reqheight()
+                    + 20)         # top bar + info label + padding
+        w = tw + chrome_w
+        h = min(th + chrome_h, self.win.winfo_screenheight() - 120)
+        self.win.geometry(f"{w}x{h}")
+
+    def _on_wheel(self, e):
+        self.canvas.yview_scroll(int(-e.delta / 120), "units")
 
     def _toggle_row(self, i):
         self.done.symmetric_difference_update({i})
         self._paint()
 
     def _paint(self):
-        for turn_i, pos, items in self._painters:
+        for turn_i, pos, items, spr in self._painters:
             muted = turn_i in self.done or (
                 pos is not None and not self.col_vars[pos].get())
             for lbl, fg in items:
                 lbl.configure(foreground=theme.MUTED if muted else fg)
+            if spr:
+                il, mon = spr
+                im = sprites.sprite(mon, 40, muted=muted)
+                il.configure(image=im or "")
+                il.image = im
