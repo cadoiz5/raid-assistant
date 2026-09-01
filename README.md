@@ -18,6 +18,7 @@ per-raid "strat" constraints (species / item / ability / stat bounds / moves).
 | `build_lists.py` | Regenerates `data/` (reference name lists + `species_stats.json`) from PokeMMO's dex dump (`../dump/*.json`). |
 | `data/` | Committed reference data the parser snaps to: `moves.txt`, `abilities.txt`, `items.txt`, `species.txt`, `species_stats.json`. |
 | `samples/` | Real summary-card screenshots for testing (`sample*.png`). |
+| `sprites/` | Front battle sprite per species (`<species>.png`, 96×96), from PokeMMO's sprite dump. |
 | `strats/<Raid>/<Strat>.txt` | Constraint files for a raid strat (all 4 positions). Format: `strats/FORMAT.md`. |
 
 ## Setup
